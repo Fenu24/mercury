@@ -1,0 +1,17 @@
+21/03/2020
+Yarkovsky drift in mercury is implemented in mfo_user. The variables with the number of
+bodies are
+   nbod: total number of bodies
+   nbig: total number of massive bodies, including the Sun
+Note therefore that the massless bodies have indices
+   nbig+1,...,nbod
+
+The variable with the mass parameters is
+   m(j) = GM(j)
+and the units are AU, y and solar masses
+
+For the values of the Yarkovsky drifts in input, I added a global variable called 
+   dadt_My(NMAX)
+The routine that reads avery input file is
+   mio_in
+and it takes as arguments all the parameters needed to read.
