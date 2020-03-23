@@ -1,7 +1,9 @@
 #bin/bash
 ./clean.sh
-
+cp input/yarkovsky.in .
 ./mercury6
+
+rm yarkovsky.in
 rm *.tmp
 ./element6
 sed -i '1,4d' *.aei

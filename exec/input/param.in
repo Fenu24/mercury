@@ -20,7 +20,7 @@
  output precision = high
  < not used at present >
  include relativity in integration= no
- include user-defined force = no
+ include user-defined force = yes
 )---------------------------------------------------------------------
 ) These parameters do not need to be adjusted often:
 )---------------------------------------------------------------------

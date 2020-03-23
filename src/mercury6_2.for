@@ -132,6 +132,12 @@ c
       external mdt_mvs, mdt_bs1, mdt_bs2, mdt_ra15, mdt_hy
       external mco_dh2h,mco_h2dh
       external mco_b2h,mco_h2b,mco_h2mvs,mco_mvs2h,mco_iden
+
+      !***************************
+      ! Yarkovsky drifts in input
+      !***************************
+      real*8 dadt_My(NMAX)
+      common /Yarkovsky/ dadt_My
 c
       data opt/0,1,1,2,0,1,0,0/
 c
@@ -141,6 +147,11 @@ c Get initial conditions and integration parameters
       call mio_in (time,tstart,tstop,dtout,algor,h0,tol,rmax,rcen,jcen,
      %  en,am,cefac,ndump,nfun,nbod,nbig,m,xh,vh,s,rho,rceh,stat,id,
      %  epoch,ngf,opt,opflag,ngflag,outfile,dumpfile,lmem,mem)
+
+      if(opt(8).eq.1)then
+         call yarko_in(id, nbod, nbig, dadt_My)
+!         stop
+      endif
 c
 c If this is a new integration, integrate all the objects to a common epoch.
       if (opflag.eq.-2) then
@@ -219,6 +230,80 @@ c
  232  format (a,1p1e12.5)
       stop
       end
+
+
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c     yarko_in 
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c Author: M. Fenucci 
+c
+c
+c
+c
+c
+c 
+c 
+c------------------------------------------------------------------------------
+
+      subroutine yarko_in(id, nbod, nbig, dadt_My)
+         implicit none
+         include'mercury.inc'
+         character*25, intent(in) ::  id(NMAX)
+         integer,      intent(in) ::  nbod, nbig
+         real*8,       intent(out) :: dadt_My(NMAX)
+         ! end interface
+         integer j, k
+         integer nfound, nast
+         logical found
+         real*10 dadt
+         character*9 astname
+         dadt_My = 0.d0
+         nfound = 0
+         nast = nbod - nbig 
+         open(unit=100,file='yarkovsky.in',action='read')
+         do j=nbig+1, nbod
+         read(100,*, end=133) astname, dadt 
+            ! Search for this asteroid in the id list, if I don't find
+            ! it, print an error and stop the program
+            found=.false.
+            do k=nbig+1, nbod
+               if(id(k).eq.astname)then
+                  ! If I find the asteroid, add it in the correspondig
+                  ! index of the ID
+                  found=.true.
+                  nfound = nfound + 1
+                  dadt_My(k) = dadt
+                  ! write(*,*) "k, id(k) ", k, id(k)
+                  ! write(*,*) astname, dadt
+                  exit
+               endif
+            enddo
+
+            if(.not.found)then
+               write(*,*) "Error: asteroid ", astname, " not present "
+               write(*,*) "       in the input file small.in"
+               write(*,*) "Stopping program"
+               stop
+            endif
+         enddo
+ 133  continue
+         close(100)
+         ! If the number of asteroids found does not correspond with the
+         ! total number of them , print an error message and stop
+         ! theprogram
+         if(nfound.ne.nast)then
+            write(*,*) "Error: not enough asteroid in input! "
+            write(*,*) "Number of asteroid: ", nast
+            write(*,*) "Number found:       ", nfound
+            write(*,*) "Stoppping program"
+            stop
+         endif
+      end subroutine
+
 c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
@@ -247,60 +332,70 @@ c
 c Input/Output
       integer nbod, nbig
       real*8 time,jcen(3),m(nbod),x(3,nbod),v(3,nbod),a(3,nbod)
-      !**************************
-      ! added for Yarkovsky drift
-      !**************************
+      real*8 dadt_My(NMAX)
+      !**************************************
+      ! Variables to compute Yarkovsky drift 
+      !**************************************
+      ! Yarkovsky is implemented as a drift along the heliocentric 
+      ! velocity, as done in orbit9
       real*8 r, r2, v2, xv
       real*8 squarg, factor
       real*8 angmom(3), norm_angmom2
       real*8 dadt, trans(3), norm_trans, trans_vers(3)
       real*8 yark_acc
       real*8 gmsy
-      !**************************
+      !**************************************
+      common /Yarkovsky/ dadt_My
 c
 c Local
       integer j
 c
 c------------------------------------------------------------------------------
 c
-
+      ! Initialize the output variable to 0, this is needed also to do
+      ! not add any drift to the planets
       a = 0.d0
-
       ! The Yarkovsky drift acts only on small particles. The variable
       ! nbod contains the total number of bodies, while the variable
-      ! nbig containd the number of massive bodies, including the Sun
+      ! nbig contains the number of massive bodies, including the Sun
       !**** 
-      !TEMPORARY TEST
+      !TEMPORARY TEST; OK!
       gmsy=m(1) ! here units are AU, y
-      dadt = 1.d-2/(365.25d0*10**6.d0)
+      ! Convert the drift in AU/d
+!      dadt = 1.d-2/(365.25d0*10**6.d0)
       !*****
+      ! Do loop only on the massless bodies
       do j = nbig+1, nbod
-        xv = dot_product(x(1:3, j), v(1:3, j))
-        r2 = dot_product(x(1:3, j), x(1:3, j))
-        v2 = dot_product(v(1:3, j), v(1:3, j))
-        r  = sqrt(r2)
-
-        angmom(1) = x(2,j)*v(3,j) - x(3,j)*v(2,j)
-        angmom(2) = x(3,j)*v(1,j) - x(1,j)*v(3,j)
-        angmom(3) = x(1,j)*v(2,j) - x(2,j)*v(1,j)
-        norm_angmom2 = dot_product(angmom, angmom) 
-
-        squarg = 2.d0*gmsy/r - v2
-        if(squarg .lt. 0.d0)then
-           squarg = 0.d0
-        endif
-
-        factor = norm_angmom2*sqrt(squarg)/gmsy
-        yark_acc = 0.5d0*factor/r2
-
-        trans(1:3) = v(1:3, j) - x(1:3, j)*xv/r2
-        norm_trans = norm2(trans)
-        trans_vers(1:3) = trans(1:3)/norm_trans
-        a(1:3, j) = dadt*yark_acc*trans_vers
-!        write(*,*) "yark acc ", yark_acc
-!        a(1,j) = 0.d0
-!        a(2,j) = 0.d0
-!        a(3,j) = 0.d0
+         ! Convert the drift in AU/d
+         dadt = dadt_My(j)/(365.25d0*10**6.d0)
+         ! Compute dot product between the position and the velocity
+         xv = dot_product(x(1:3, j), v(1:3, j))
+         ! Compute the heliocentric distance and norm of the velocity
+         r2 = dot_product(x(1:3, j), x(1:3, j))
+         v2 = dot_product(v(1:3, j), v(1:3, j))
+         r  = sqrt(r2)
+         ! Compute the angular momentum
+         angmom(1) = x(2,j)*v(3,j) - x(3,j)*v(2,j)
+         angmom(2) = x(3,j)*v(1,j) - x(1,j)*v(3,j)
+         angmom(3) = x(1,j)*v(2,j) - x(2,j)*v(1,j)
+         ! Compute the norm of the angular momentum
+         norm_angmom2 = dot_product(angmom, angmom) 
+         ! Compute the parameter 2GMsun/r - v^2
+         squarg = 2.d0*gmsy/r - v2
+         if(squarg .lt. 0.d0)then
+            squarg = 0.d0
+         endif
+         ! Compute the augmentation factor
+         factor = norm_angmom2*sqrt(squarg)/gmsy
+         ! Compute the intensity of the Yarkovsky drift
+         yark_acc = 0.5d0*factor/r2
+         ! Compute the transversal direction, defined by the vector
+         ! v - x (x \cdot v)/|x|^2
+         trans(1:3) = v(1:3, j) - x(1:3, j)*xv/r2
+         norm_trans = norm2(trans)
+         trans_vers(1:3) = trans(1:3)/norm_trans
+         ! Add the Yarkovsky acceleration in the output variable
+         a(1:3, j) = dadt*yark_acc*trans_vers
       end do
 c
 c------------------------------------------------------------------------------
@@ -2342,7 +2437,8 @@ c Advance Interaction Hamiltonian
         call mfo_mvs (jcen,nbod,nbig,m,x,xj,a,stat)
 c
 c If required, apply non-gravitational and user-defined forces
-        if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,ausr)
+        if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,
+     %      ausr)
         if (ngflag.eq.1.or.ngflag.eq.3) call mfo_ngf (nbod,x,v,angf,ngf)
 c
         do j = 2, nbod
@@ -2369,7 +2465,8 @@ c Advance Interaction Hamiltonian
         call mfo_mvs (jcen,nbod,nbig,m,x,xj,a,stat)
 c
 c If required, apply non-gravitational and user-defined forces
-        if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,ausr)
+        if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,
+     %      ausr)
         if (ngflag.eq.1.or.ngflag.eq.3) call mfo_ngf (nbod,x,v,angf,ngf)
 c
         do j = 2, nbod
@@ -3498,7 +3595,8 @@ c If accelerations from previous call are not valid, calculate them now
           ausr(3,j) = 0.d0
         end do
 c If required, apply non-gravitational and user-defined forces
-        if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,ausr)
+        if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,
+     %     ausr)
         if (ngflag.eq.1.or.ngflag.eq.3) call mfo_ngf (nbod,x,v,angf,ngf)
       end if
 c
@@ -3582,7 +3680,8 @@ c
 c
 c Advance interaction Hamiltonian for H/2
       call mfo_hy (jcen,nbod,nbig,m,x,rcrit,a,stat)
-      if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,ausr)
+      if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,
+     %     ausr)
       if (ngflag.eq.1.or.ngflag.eq.3) call mfo_ngf (nbod,x,v,angf,ngf)
 c
       do j = 2, nbod
@@ -3817,7 +3916,8 @@ c
           ausr(3,j) = 0.d0
         end do
 c If required, apply non-gravitational and user-defined forces
-        if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,ausr)
+        if (opt(8).eq.1) call mfo_user(time,jcen,nbod,nbig,m,x,v,
+     %     ausr)
         if (ngflag.eq.1.or.ngflag.eq.3) call mfo_ngf (nbod,x,v,angf,ngf)
       end if
 c
@@ -3853,7 +3953,8 @@ c Check for close-encounter minima during drift step
 c
 c Advance interaction Hamiltonian for H/2
       call mfo_mvs (jcen,nbod,nbig,m,x,xj,a,stat)
-      if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,ausr)
+      if (opt(8).eq.1) call mfo_user (time,jcen,nbod,nbig,m,x,v,
+     % ausr)
       if (ngflag.eq.1.or.ngflag.eq.3) call mfo_ngf (nbod,x,v,angf,ngf)
 c
       do j = 2, nbod

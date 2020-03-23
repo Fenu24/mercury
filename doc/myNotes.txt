@@ -12,6 +12,12 @@ and the units are AU, y and solar masses
 
 For the values of the Yarkovsky drifts in input, I added a global variable called 
    dadt_My(NMAX)
-The routine that reads avery input file is
+The routine that reads every input file is
    mio_in
 and it takes as arguments all the parameters needed to read.
+
+id(NMAX)
+
+id(nbod) = string( lim(1,1):min(24+lim(1,1),lim(2,1)) )
+
+opt(8) contains the flag for the user defined force
