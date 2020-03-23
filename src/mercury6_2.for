@@ -240,13 +240,13 @@ c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: M. Fenucci 
-c
-c
-c
-c
-c
 c 
-c 
+c Reads the content of the file yarkovsky.in
+c If an object is not found in the small.in used, of if the
+c number of objects does not correspond to the actual one, the program
+c stops with an error message written on the screen.
+c Note that the sorting of the objects in yarkovsky.dat is not relevant.
+c
 c------------------------------------------------------------------------------
 
       subroutine yarko_in(id, nbod, nbig, dadt_My)
@@ -259,7 +259,7 @@ c------------------------------------------------------------------------------
          integer j, k
          integer nfound, nast
          logical found
-         real*10 dadt
+         real*8 dadt
          character*9 astname
          dadt_My = 0.d0
          nfound = 0
@@ -282,7 +282,8 @@ c------------------------------------------------------------------------------
                   exit
                endif
             enddo
-
+            ! If we are not able to find the asteroid, print an error
+            ! message and stop the program
             if(.not.found)then
                write(*,*) "Error: asteroid ", astname, " not present "
                write(*,*) "       in the input file small.in"
@@ -292,7 +293,7 @@ c------------------------------------------------------------------------------
          enddo
  133  continue
          close(100)
-         ! If the number of asteroids found does not correspond with the
+         ! If the number of asteroids found does not correspond to the
          ! total number of them , print an error message and stop
          ! theprogram
          if(nfound.ne.nast)then
@@ -332,7 +333,7 @@ c
 c Input/Output
       integer nbod, nbig
       real*8 time,jcen(3),m(nbod),x(3,nbod),v(3,nbod),a(3,nbod)
-      real*8 dadt_My(NMAX)
+c Local
       !**************************************
       ! Variables to compute Yarkovsky drift 
       !**************************************
@@ -345,9 +346,9 @@ c Input/Output
       real*8 yark_acc
       real*8 gmsy
       !**************************************
+      real*8 dadt_My(NMAX)
       common /Yarkovsky/ dadt_My
 c
-c Local
       integer j
 c
 c------------------------------------------------------------------------------
@@ -358,15 +359,10 @@ c
       ! The Yarkovsky drift acts only on small particles. The variable
       ! nbod contains the total number of bodies, while the variable
       ! nbig contains the number of massive bodies, including the Sun
-      !**** 
-      !TEMPORARY TEST; OK!
-      gmsy=m(1) ! here units are AU, y
-      ! Convert the drift in AU/d
-!      dadt = 1.d-2/(365.25d0*10**6.d0)
-      !*****
+      gmsy=m(1) ! here units are AU, d
       ! Do loop only on the massless bodies
       do j = nbig+1, nbod
-         ! Convert the drift in AU/d
+         ! Convert the drift in AU/y
          dadt = dadt_My(j)/(365.25d0*10**6.d0)
          ! Compute dot product between the position and the velocity
          xv = dot_product(x(1:3, j), v(1:3, j))

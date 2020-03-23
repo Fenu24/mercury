@@ -1,23 +1,57 @@
-21/03/2020
-Yarkovsky drift in mercury is implemented in mfo_user. The variables with the number of
-bodies are
-   nbod: total number of bodies
-   nbig: total number of massive bodies, including the Sun
-Note therefore that the massless bodies have indices
-   nbig+1,...,nbod
+---------------------------------------------
+    IMPLEMENTATION OF THE YARKOVSKY DRIFT
+---------------------------------------------
 
-The variable with the mass parameters is
-   m(j) = GM(j)
-and the units are AU, y and solar masses
+GENERAL USAGE
+   The implementation of the Yarkovsky effect reproduces the one used in orbit9. 
+   The values of the Yarkovsky drifts are given in input, by means of the file
+      yarkovsky.in
+   which is a two-column file, containing in the first column the name of the object and in
+   the second column the value of the drift in AU/My.
 
-For the values of the Yarkovsky drifts in input, I added a global variable called 
-   dadt_My(NMAX)
-The routine that reads every input file is
-   mio_in
-and it takes as arguments all the parameters needed to read.
+DETAILS OF THE IMPLEMENTATIONS
 
-id(NMAX)
+   VARIABLES ALREADY PRESENT
+   Yarkovsky drift in mercury is implemented in the subroutine mfo_user, that permits to add
+   a user-defined force. Some variables, already present in the code, that are needed are:
+     1) The number of bodies involved, which are divided into
+         nbod: total number of bodies
+         nbig: total number of massive bodies, including the Sun
+        The positions and velocities of these bodies are all stored in the same variable, wthout
+        differences between massive and massless particles. 
+        Then, the massless bodies have indices
+           nbig+1,...,nbod
+     2) The variable with the mass parameters is
+           m(j) = GM(j)
+        and the units are AU, days and solar masses
+     3) The variable that contains the names of the objects is
+           id(nbod) 
+     4) The flag that indicates if we are using the user-defined force is 
+           opt(8)
+        and it can be 1 or 0.
 
-id(nbod) = string( lim(1,1):min(24+lim(1,1),lim(2,1)) )
+   NEW VARIABLES
+   To store the values of the Yarkovsky drifts in input, I added the vector
+      dadt_My(NMAX)
+   which is stored in a common block called /Yarkovsky/, which is used only in the main
+   program and in the mfo_user.
+   Note: this is not the best choice, the best solution would be to pass this variable
+         every time that it is needed. However a lot of patient and carefulness have to be
+         emplyed for this step, since there are quite a number of dependencies to keep
+         track of.
 
-opt(8) contains the flag for the user defined force
+   READ THE INPUT FILE
+   The input file for the Yarkovsky drift is called
+      yarkovsky.in
+   and it must be placed in the folder where we are running mercury. 
+   The routine that reads this file is 
+      yarko_in
+   This routine reads one row at a time:
+      - First it reads the name of the object, then it search for it in the list of the
+        objects, i.e. in the array id. If it is found, then the value of dadt_My in the
+        corresponding index is added. If the object is not found, an error message is
+        printed on the screen and the program stops.
+      - Once we finish to read the file, we check that we have found all the objects in
+        input. If this is not the case, an error message is printed on the screen and the
+        program stops.
+   Note that the sorting of the objects in the input file is not relevant.
