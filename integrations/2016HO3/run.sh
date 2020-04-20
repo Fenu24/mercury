@@ -1,5 +1,11 @@
 #bin/bash
 
+function usage () {
+   echo " Usage: run.sh <yarko drift>"
+   exit 1
+}
+
+
 function filesin() {
    echo "input/big.in"          > files.in
    echo "input/small.in"       >> files.in
@@ -34,10 +40,27 @@ echo ") Which bodies do you want? (List one per line or leave blank for all bodi
 echo ")"                                                                               >> element.in
 }
 
+
+if [ $# -lt 1 ]; then
+   echo 'no Yarkovsky drift supplied'
+   usage
+fi
+
+# Clean everything
 ./clean.sh
+
+# Take the list of asteroid names
+cat input/small.in | grep clo | awk '{print $1}' > astnames.txt
 
 # Set the files.in for the forward integration
 filesin "Forward"
+
+# Create yarkovsky.in for the forward integration
+rm yarkovsky.in
+touch yarkovsky.in
+while IFS= read -r astNam; do
+   echo "$astNam $1" >> yarkovsky.in
+done < astnames.txt
 
 # Run the forward integration
 ./mercury6
@@ -55,6 +78,13 @@ mv element.out *.aei outputForward
 # Set the files.in for the backward integration
 filesin "Backward"
 
+# Create yarkovsky.in for the backward integration
+rm yarkovky.in
+touch yarkovky.in
+while IFS= read -r astNam; do
+   echo "$astNam -$1" >> yarkovsky.in
+done < astnames.txt
+
 # Run the backward integration
 ./mercury6
 rm *.tmp
@@ -62,6 +92,8 @@ rm *.tmp
 # Convert the output to Keplerian elements
 elementin "Backward"
 ./element6
+
+rm astnames.txt
 
 # Remove the header and move everything to OutputBackward
 # NOTE: we remove a line more, so that we cancel the initial 

@@ -51,7 +51,7 @@ ylim([0.95 1])
 yticks([0.96 0.97 0.98 0.99 1])
 ylabel('$\sqrt{1-e^2} \cos i$','interpreter','latex')
 %title('469219 Kamoʻoalewa')
-title('No Yarkovsky')
+title('da/dt = 0.008 AU/My')
 
 h2 = subplot(612);
 plot(t,lambda_r)
