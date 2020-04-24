@@ -3,8 +3,11 @@ close all
 
 deg2rad = pi/180;
 
-load c0.aei
-load EARTH.aei
+load clo0.aei
+load EARTHMOO.aei
+
+c0 = clo0;
+EARTH = EARTHMOO;
 
 t      = c0(:,1)/10^3;
 a      = c0(:,2);
@@ -51,7 +54,8 @@ ylim([0.95 1])
 yticks([0.96 0.97 0.98 0.99 1])
 ylabel('$\sqrt{1-e^2} \cos i$','interpreter','latex')
 %title('469219 Kamoʻoalewa')
-title('da/dt = 0.008 AU/My')
+%title('da/dt = 0.008 AU/My')
+title('Evolution with the Earth-Moon barycenter')
 
 h2 = subplot(612);
 plot(t,lambda_r)

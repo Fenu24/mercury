@@ -7,7 +7,7 @@ function usage () {
 
 
 function filesin() {
-   echo "input/big.in"          > files.in
+   echo "input/bigEM.in"          > files.in
    echo "input/small.in"       >> files.in
    echo "input/param$1.in"     >> files.in
    echo "output$1/xv.out"      >> files.in
@@ -79,8 +79,8 @@ mv element.out *.aei outputForward
 filesin "Backward"
 
 # Create yarkovsky.in for the backward integration
-rm yarkovky.in
-touch yarkovky.in
+rm yarkovsky.in
+touch yarkovsky.in
 while IFS= read -r astNam; do
    echo "$astNam -$1" >> yarkovsky.in
 done < astnames.txt
