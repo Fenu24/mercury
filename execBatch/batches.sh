@@ -1,6 +1,7 @@
 #/bin/bash
 
-astCat="ast3to1.cat"
+#astCat="ast3to1.cat"
+astCat="astnu6.cat"
 # Remove header and apostrophes from astCat
 sed '/!/d' $astCat | sed '1d' | sed s/\'//g > tmp.cat
 
@@ -10,7 +11,7 @@ while [ $i -le 20 ]
 do
    rm -rf $i 2>/dev/null
    mkdir $i
-   if [ $i -le 10 ]
+   if [ $i -le 20 ]
    then
       j=$[($i-1)*50+1]
       k=$[($i-1)*50+50]
@@ -26,15 +27,20 @@ do
    echo ")---------------------------------------------------------------------" >> small.in
    echo " style (Cartesian, Asteroidal, Cometary) = Asteroidal" >> small.in
    echo ")--------------------------------------------d or D is not matter--0d0 is possible too--" >> small.in
+   rm  -rf yarkovsky.in 2>/dev/null
+   touch yarkovsky.in
    while IFS=" " read -r name t0 a e inc OmNod omega ell H x y ; do
       t0JD=$(echo $t0 '+ 2400000.5' | bc)
       echo "$name ep=$t0JD" >> small.in
       echo " $a $e $inc $omega $OmNod $ell 0.d0 0.d0 0.d0" | sed s/E/d/g >> small.in
+      # Write input for Yarkovsky
+      echo "$name -0.2" >> yarkovsky.in
    done < batch.cat 
    # prepare other input files for mercury
    mv small.in $i
    cp message.in $i
    cp element.in $i
+   cp yarkovsky.in $i
    cd $i
    echo "../big.in"    > files.in
    echo "small.in"    >> files.in
@@ -56,18 +62,18 @@ done
 rm batch.cat tmp.cat
 
 # Run the jobs
-#usedproc=0
-#nproc=5
-#nrun=20
-#for (( j=1; j<$nrun+1; j++)) do
-#   cd $j
-#   echo "run number " $j
-#   nohup ./mercury6 & 2>/dev/null
-#   let usedproc=usedproc+1
-#   if [ $usedproc -ge $1 ]; then
-#     wait
-#     usedproc=0
-#   fi
-#   cd ..
-#done 
+usedproc=0
+nproc=20
+nrun=20
+for (( j=1; j<$nrun+1; j++)) do
+   cd $j
+   echo "run number " $j
+   nohup ./mercury6 & 2>/dev/null
+   let usedproc=usedproc+1
+   if [ $usedproc -ge $nproc ]; then
+     wait
+     usedproc=0
+   fi
+   cd ..
+done 
 #wait
