@@ -12,7 +12,7 @@
  express time relative to integration start time = yes
 )---------------------------------------------------------------------
 ) Output format? (e.g. a8.4 => semi-major axis with 8 digits & 4 dec. places)
-   a8.5 e8.6 i8.4 n8.4 g8.4 l8.4
+   a10.5 e8.6 i8.4 n8.4 g8.4 l8.4
 )p13e l13.5e a8.5 e8.6 i8.4 g8.4 n8.4 m13e 
 ) a21.16 x21.16 y21.16 z21.16
 )---------------------------------------------------------------------

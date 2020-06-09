@@ -15,5 +15,8 @@ do
    i=$[$i+1]
 done
 
+# Remove the lines with asterisks
+sed -i '/\*/d' kep/*.aei
+
 rm -rf infoAll.txt
 cat */info.out >> infoAll.txt
