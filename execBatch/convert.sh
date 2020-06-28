@@ -2,7 +2,7 @@
 
 i="1"
 
-while [ $i -le 10 ]
+while [ $i -le 20 ]
 do
    echo "run $i"
    cp element.in $i
@@ -15,4 +15,8 @@ do
    i=$[$i+1]
 done
 
+# Remove the lines with asterisks
+sed -i '/\*/d' kep/*.aei
 
+rm -rf infoAll.txt
+cat */info.out >> infoAll.txt
