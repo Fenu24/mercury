@@ -1,10 +1,9 @@
 # Manual for the augment MERCURY integrator
 
-**Authors**: 
-- Marco Fenucci (Department of Astronomy, Faculty of Mathematics, University of Belgrade, email: <marco_fenucci@matf.bg.ac.rs>) 
-- Bojan Novaković (Department of Astronomy, Faculty of Mathematics, University of Belgrade, email: <bojan@matf.bg.ac.rs>) 
+## Authors 
+- [Marco Fenucci](http://adams.dm.unipi.it/~fenucci/index.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<marco_fenucci@matf.bg.ac.rs>) 
+- [Bojan Novaković](http://poincare.matf.bg.ac.rs/~bojan/index_e.html), Department of Astronomy, Faculty of Mathematics, University of Belgrade (<bojan@matf.bg.ac.rs>) 
 
-**Reference Paper:** *Mercury and OrbFit packages for numerical integration of planetary systems: implementations of the Yarkovsky and YORP effects*
 
 ## Introduction
 
@@ -49,3 +48,7 @@ Before using the package for the first time, the code needs to be compiled. To f
 ## Run a simulation and output files
 
 ## Test runs
+
+## Refereces
+- *Mercury and OrbFit packages for numerical integration of planetary systems: implementations of the Yarkovsky and YORP effects*
+
