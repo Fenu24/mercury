@@ -1,13 +1,13 @@
 #bin/bash
 
 function usage () {
-   echo " Usage: run.sh <yarko drift>"
+   echo " Usage: run.sh"
    exit 1
 }
 
 
 function filesin() {
-   echo "input/bigEM.in"          > files.in
+   echo "input/big.in"          > files.in
    echo "input/small.in"       >> files.in
    echo "input/param$1.in"     >> files.in
    echo "output$1/xv.out"      >> files.in
@@ -29,9 +29,9 @@ echo ") List the input files, one per line"                                     
 echo " output$1/xv.out"                                                                >> element.in
 echo ")---------------------------------------------------------------------"          >> element.in
 echo " type of elements (central body, barycentric, Jacobi) = central"                 >> element.in
-echo " minimum interval between outputs (days) = 365.25d0"                             >> element.in
+echo " minimum interval between outputs (days) = 1.0"                             >> element.in
 echo " express time in days or years = years"                                          >> element.in
-echo " express time relative to integration start time = yes"                          >> element.in
+echo " express time relative to integration start time = no"                          >> element.in
 echo ")---------------------------------------------------------------------"          >> element.in
 echo ") Output format? (e.g. a8.4 => semi-major axis with 8 digits & 4 dec. places)"   >> element.in
 echo "   a8.5 e8.6 i8.4 n8.4 g8.4 l8.4"                                                >> element.in
@@ -41,11 +41,6 @@ echo ")"                                                                        
 }
 
 
-if [ $# -lt 1 ]; then
-   echo 'no Yarkovsky drift supplied'
-   usage
-fi
-
 # Clean everything
 ./clean.sh
 
@@ -54,13 +49,6 @@ cat input/small.in | grep clo | awk '{print $1}' > astnames.txt
 
 # Set the files.in for the forward integration
 filesin "Forward"
-
-# Create yarkovsky.in for the forward integration
-rm yarkovsky.in
-touch yarkovsky.in
-while IFS= read -r astNam; do
-   echo "$astNam $1" >> yarkovsky.in
-done < astnames.txt
 
 # Run the forward integration
 ./mercury6
@@ -77,13 +65,6 @@ mv element.out *.aei outputForward
 
 # Set the files.in for the backward integration
 filesin "Backward"
-
-# Create yarkovsky.in for the backward integration
-rm yarkovsky.in
-touch yarkovsky.in
-while IFS= read -r astNam; do
-   echo "$astNam -$1" >> yarkovsky.in
-done < astnames.txt
 
 # Run the backward integration
 ./mercury6

@@ -1,22 +1,16 @@
 #bin/bash
 
-function usage () {
-   echo " Usage: run.sh <yarko drift modulo> <sign>"
-   exit 1
-}
-
-
 function filesin() {
-   echo "../input/big.in"       > files.in
-   echo "../input/small$2.in"  >> files.in
-   echo "../input/param$1.in"  >> files.in
-   echo "output$1/xv.out"      >> files.in
-   echo "output$1/ce.out"      >> files.in
-   echo "output$1/info.out"    >> files.in
-   echo "output$1/big.dmp"     >> files.in
-   echo "output$1/small.dmp"   >> files.in
-   echo "output$1/param.dmp"   >> files.in
-   echo "output$1/restart.dmp" >> files.in
+   echo "../input/big.in"            > files.in
+   echo "../input/batch$2/small.in"  >> files.in
+   echo "../input/param$1.in"        >> files.in
+   echo "output$1/xv.out"            >> files.in
+   echo "output$1/ce.out"            >> files.in
+   echo "output$1/info.out"          >> files.in
+   echo "output$1/big.dmp"           >> files.in
+   echo "output$1/small.dmp"         >> files.in
+   echo "output$1/param.dmp"         >> files.in
+   echo "output$1/restart.dmp"       >> files.in
 }
 
 
@@ -30,7 +24,7 @@ echo ") List the input files, one per line"                                     
 echo " output$1/xv.out"                                                                >> element.in
 echo ")---------------------------------------------------------------------"          >> element.in
 echo " type of elements (central body, barycentric, Jacobi) = central"                 >> element.in
-echo " minimum interval between outputs (days) = 365.25d0"                             >> element.in
+echo " minimum interval between outputs (days) = 365.25d1"                             >> element.in
 echo " express time in days or years = years"                                          >> element.in
 echo " express time relative to integration start time = yes"                          >> element.in
 echo ")---------------------------------------------------------------------"          >> element.in
@@ -41,12 +35,13 @@ echo ") Which bodies do you want? (List one per line or leave blank for all bodi
 echo ")"                                                                               >> element.in
 }
 
-if [ $# -lt 2 ]; then
-   echo 'no Yarkovsky drift or direction supplied'
-   usage
-fi
+#if [ $# -lt 2 ]; then
+#   echo 'no Yarkovsky drift or direction supplied'
+#   usage
+#fi
 
 # Clean and prepare for forward integration
+#n_batch=20
 n_batch=20
 i=1
 while [ $i -le $n_batch ]
@@ -62,21 +57,24 @@ do
 
    mkdir kepOut
    mkdir outputForward
+
+   # Create input files for forward integration
    filesin "Forward" $i
 
    # Take the list of asteroid names
-   cat ../input/small$i.in | grep clo | awk '{print $1}' > astnames.txt
+   #cat ../input/small$i.in | grep clo | awk '{print $1}' > astnames.txt
 
    # Create yarkovsky.in for the forward integration
    rm yarkovsky.in 2>/dev/null
-   touch yarkovsky.in
-   while IFS= read -r astNam; do
-      if [ $2 == "+" ]; then
-         echo "$astNam $1" >> yarkovsky.in
-      else
-         echo "$astNam -$1" >> yarkovsky.in
-      fi
-   done < astnames.txt
+   cp ../input/batch$i/yarkovskyForward.in yarkovsky.in
+#   touch yarkovsky.in
+#   while IFS= read -r astNam; do
+#      if [ $2 == "+" ]; then
+#         echo "$astNam $1" >> yarkovsky.in
+#      else
+#         echo "$astNam -$1" >> yarkovsky.in
+#      fi
+#   done < astnames.txt
    cd ..
    i=$[$i+1]
 done
@@ -109,6 +107,7 @@ for (( j=1; j<$n_batch+1; j++)) do
    cd ..
 done
 
+rm -r outputForward
 
 i=1
 while [ $i -le $n_batch ]
@@ -119,19 +118,20 @@ do
    filesin "Backward" $i
 
    # Take the list of asteroid names
-   cat ../input/small$i.in | grep clo | awk '{print $1}' > astnames.txt
+   #cat ../input/small$i.in | grep clo | awk '{print $1}' > astnames.txt
 
    # Create yarkovsky.in for the backward integration
    # NOTE: we have to change the sign for the backward propagation!
    rm yarkovsky.in 2>/dev/null
-   touch yarkovsky.in
-   while IFS= read -r astNam; do
-      if [ $2 == "+" ]; then
-         echo "$astNam -$1" >> yarkovsky.in
-      else
-         echo "$astNam $1" >> yarkovsky.in
-      fi
-   done < astnames.txt
+   cp ../input/batch$i/yarkovskyBackward.in yarkovsky.in
+   #touch yarkovsky.in
+   #while IFS= read -r astNam; do
+   #   if [ $2 == "+" ]; then
+   #      echo "$astNam -$1" >> yarkovsky.in
+   #   else
+   #      echo "$astNam $1" >> yarkovsky.in
+   #   fi
+   #done < astnames.txt
 
    cd ..
    i=$[$i+1]
@@ -154,7 +154,7 @@ for (( j=1; j<$n_batch+1; j++)) do
 done 
 wait
 
-# Convert the forward integration
+# Convert the backward integration
 for (( j=1; j<$n_batch+1; j++)) do
    cd $j 
    elementin "Backward"
@@ -182,3 +182,5 @@ for (( j=1; j<$n_batch+1; j++)) do
 
    cd ..
 done
+
+rm -r outputBackward

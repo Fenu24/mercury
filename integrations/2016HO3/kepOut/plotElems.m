@@ -4,10 +4,10 @@ close all
 deg2rad = pi/180;
 
 load clo0.aei
-load EARTHMOO.aei
+load EARTH.aei
 
 c0 = clo0;
-EARTH = EARTHMOO;
+%EARTH = EARTHMOO;
 
 t      = c0(:,1)/10^3;
 a      = c0(:,2);
@@ -56,6 +56,7 @@ ylabel('$\sqrt{1-e^2} \cos i$','interpreter','latex')
 %title('469219 Kamoʻoalewa')
 %title('da/dt = 0.008 AU/My')
 title('Evolution with the Earth-Moon barycenter')
+xlim([-1500 1500])
 
 h2 = subplot(612);
 plot(t,lambda_r)
@@ -63,6 +64,7 @@ hold on
 %xlabel('t (Kyr)')
 set(gca,'Xticklabel',[])
 ylim([-200 200])
+xlim([-1500 1500])
 yticks([-150 -100 -50 0 50 100 150])
 ylabel('$\lambda_r$ (deg)','interpreter','latex')
 
@@ -71,6 +73,7 @@ plot(t,a)
 hold on
 %xlabel('t (Kyr)')
 ylim([0.99 1.01])
+xlim([-1500 1500])
 yticks([0.996 1 1.005])
 set(gca,'Xticklabel',[])
 ylabel('a (AU)')
@@ -82,6 +85,7 @@ hold on
 set(gca,'Xticklabel',[])
 ylabel('e')
 ylim([0 0.25])
+xlim([-1500 1500])
 yticks([0.05 0.1 0.15 0.2])
 
 h5 = subplot(615);
@@ -90,6 +94,7 @@ hold on
 set(gca,'Xticklabel',[])
 ylabel('$i$ (deg)','interpreter','latex')
 ylim([0 15])
+xlim([-1500 1500])
 yticks([2 4 6 8 10 12 14])
 
 h6 = subplot(616);
@@ -97,6 +102,7 @@ plot(t,omega)
 hold on
 ylim([-200 200])
 yticks([-150 -100 -50 0 50 100 150])
+xlim([-150 150])
 xlabel('t (kyr)')
 ylabel('$\omega$ (deg)','interpreter','latex')
 

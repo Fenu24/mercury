@@ -119,6 +119,7 @@ c                              1 = main integration, full output
 c
 c------------------------------------------------------------------------------
 c
+      use yorp_module
       implicit none
       include 'mercury.inc'
 c
@@ -133,11 +134,6 @@ c
       external mco_dh2h,mco_h2dh
       external mco_b2h,mco_h2b,mco_h2mvs,mco_mvs2h,mco_iden
 
-      !***************************
-      ! Yarkovsky drifts in input
-      !***************************
-      real*8 dadt_My(NMAX)
-      common /Yarkovsky/ dadt_My
 c
       data opt/0,1,1,2,0,1,0,0/
 c
@@ -149,8 +145,9 @@ c Get initial conditions and integration parameters
      %  epoch,ngf,opt,opflag,ngflag,outfile,dumpfile,lmem,mem)
 
       if(opt(8).eq.1)then
-         call yarko_in(id, nbod, nbig, dadt_My)
-!         stop
+         id_copy     = id
+         tstart_copy = tstart
+         call yarko_in(id, nbod, nbig, tstart)
       endif
 c
 c If this is a new integration, integrate all the objects to a common epoch.
@@ -249,36 +246,65 @@ c Note that the sorting of the objects in yarkovsky.in is not relevant.
 c
 c------------------------------------------------------------------------------
 
-      subroutine yarko_in(id, nbod, nbig, dadt_My)
+      subroutine yarko_in(id, nbod, nbig, tstart)
+         use yorp_module
          implicit none
          include'mercury.inc'
-         character*25, intent(in) ::  id(NMAX)
-         integer,      intent(in) ::  nbod, nbig
-         real*8,       intent(out) :: dadt_My(NMAX)
+         character*25, intent(in)  :: id(NMAX)
+         integer,      intent(in)  :: nbod, nbig
+         real*8,       intent(in)  :: tstart
          ! end interface
          integer j, k
          integer nfound, nast
          logical found
-         real*8 dadt
-         character*9 astname
-         dadt_My = 0.d0
+         real*8 xxx(8), dadt
+         character*15 astname
+         real*8 alpha, epsi
+         real*8 factor
+         ! Parameters for spin-axis integration
+         integer step_auto
+         real*8  step_user
+         real*8  minD
+         namelist /yorp_param/ yorp_flag, stoc_yorp_flag, step_auto,
+     %                         step_user, enable_out, dt_out
          nfound = 0
          nast = nbod - nbig 
+         ! Open the input file
          open(unit=100,file='yarkovsky.in',action='read')
+         ! Start reading the file
          do j=nbig+1, nbod
-            read(100,*, end=133) astname, dadt 
+            ! Read a line and assign the variables
+            read(100,*, end=133) astname,  xxx(1:8)
             ! Search for this asteroid in the id list, if I don't find
             ! it, print an error and stop the program
-            found=.false.
+            found = .false.
             do k=nbig+1, nbod
                if(id(k).eq.astname)then
                   ! If I find the asteroid, add it in the correspondig
                   ! index of the ID
-                  found=.true.
+                  found = .true.
                   nfound = nfound + 1
+                  ! Assign the global variables
+                  rho_ast(k)   = xxx(1)
+                  K_ast(k)     = xxx(2)
+                  C_ast(k)     = xxx(3)
+                  D_ast(k)     = xxx(4)
+                  gamma_ast(k) = xxx(5)
+                  P_ast(k)     = xxx(6)
+                  alpha_ast(k) = xxx(7)
+                  epsi_ast(k)  = xxx(8)
+                  omega_ast(k) = 1.d0/P_ast(k)
+                  ! Choose f and g
+                  call shape_gen(K_ast(k), 
+     %                           coeff_ast(k,1), coeff_ast(k,2))
+                  ! Assign alpha and epsi
+                  alpha = alpha_ast(k)
+                  epsi  =  epsi_ast(k)
+                  ! Compute the initial Yarkovsky drift
+                  call dadt_comp(rho_ast(k), K_ast(k), C_ast(k), 
+     %                      0.5d0*D_ast(k), sma_ast(k), gamma_ast(k), 
+     %                      P_ast(k), alpha, epsi, dadt)
                   dadt_My(k) = dadt
-                  ! write(*,*) "k, id(k) ", k, id(k)
-                  ! write(*,*) astname, dadt
                   exit
                endif
             enddo
@@ -303,6 +329,78 @@ c------------------------------------------------------------------------------
             write(*,*) "Stoppping program"
             stop
          endif
+         ! =========================================
+         ! Read parameters for spin-axis integration
+         ! =========================================
+         open(unit=1,file="input/yorp.in",action="read")
+         read(1,yorp_param)
+         if(yorp_flag.eq.1)then
+            ! Set the step
+            if(step_auto.ne.0)then
+               ! If the automatic step is required, scale the
+               ! timestep with the minimum diameter in km
+               minD = minval(D_ast(nbig+1:nbod))
+               ! Rescale with the diameter in km, assuming
+               ! 50 yr timestep for 1 km asteroid
+               h_yorp = 50.d0*minD/1000.d0
+               ! Set upper limit to 50 yr and lower limit to 1 yr
+               if(h_yorp.gt.50.d0)then
+                  h_yorp = 50.d0
+               elseif(h_yorp.lt.1.d0)then
+                  h_yorp = 1.d0
+               endif
+               ! Transform time in days
+               h_yorp = h_yorp*y2d
+            else
+               ! If the automatic step is selected by the user, make sure
+               ! it is larger than 1 year and smaller than 50 years
+               if(step_user.gt.50.d0)then
+                  step_user = 50.d0
+               elseif(step_user.lt.1.d0)then
+                  step_user = 1.d0
+               endif
+               ! Set the timestep for YORP evolution to 50 years
+               ! NOTE: the unit for the time in mercury is days
+               h_yorp = step_user*y2d
+            endif
+            ! =========================================
+            ! Set initial conditions for YORP evolution
+            ! =========================================
+            ! Initialize the seed for the generation of random numbers
+            call init_random_seed()
+            ! Read the f,g functions spline
+            call read_f_g_spline
+            ! Set the initial time 
+            t_yorp   = tstart
+            time_out = tstart
+            ! Set the initial (\omega, \gamma) and
+            ! create the output file and write the initial condition 
+            do j=nbig+1, nbod
+               ! Set the units in 1/d
+               y_yorp(j, 1) = omega_ast(j)/h2d
+               y_yorp(j, 2) = gamma_ast(j)*deg2rad
+               ! If output is required, create the files and write the
+               ! initial condition
+               if(enable_out.eq.1)then
+                  astname = id_copy(j)
+                  open(unit=127, file=astname(1:len_trim(astname))
+     %                 //'.yorp',status='replace', action='write')
+                  ! Write omega in 1/h, and gamma in deg
+                  write(127, 1001) (time_out-tstart)*d2y, 
+     %           (1.d0/y_yorp(j,1))*d2h, y_yorp(j,2)*rad2deg, dadt_MY(j)
+                  close(127)
+               endif
+            enddo
+            if(enable_out.eq.1)then
+               time_out = time_out + dt_out
+            endif
+            ! If the stochastic YORP effect is included, then set the
+            ! last event to 0
+            if(stoc_yorp_flag.eq.1)then
+               last_stoc_event = 0.d0
+            endif
+         endif
+ 1001 format(4(e12.6,1x))
       end subroutine
 
 c
@@ -327,6 +425,7 @@ c------------------------------------------------------------------------------
 c
       subroutine mfo_user (time,jcen,nbod,nbig,m,x,v,a)
 c
+      use yorp_module
       implicit none
       include 'mercury.inc'
 c
@@ -346,8 +445,6 @@ c Local
       real*8 yark_acc
       real*8 gmsy
       !**************************************
-      real*8 dadt_My(NMAX)
-      common /Yarkovsky/ dadt_My
 c
       integer j
 c
@@ -361,9 +458,7 @@ c
       ! nbig contains the number of massive bodies, including the Sun
       gmsy=m(1) ! here units are AU, d
       ! Do loop only on the massless bodies
-!      write(*,*) "time = ", time
       do j = nbig+1, nbod
-!         write(*,*) j, dadt_My(j)
          ! Convert the drift in AU/y
          dadt = dadt_My(j)/(365.25d0*10**6.d0)
          ! Compute dot product between the position and the velocity
@@ -3174,6 +3269,7 @@ c
       subroutine mdt_bs1 (time,h0,hdid,tol,jcen,nbod,nbig,mass,x0,v0,s,
      %  rphys,rcrit,ngf,stat,dtflag,ngflag,opt,nce,ice,jce,force)
 c
+      use yorp_module
       implicit none
       include 'mercury.inc'
 c
@@ -3192,9 +3288,170 @@ c Local
       real*8 tmp0,tmp1,tmp2,errmax,tol2,h,hx2,h2(8)
       real*8 x(3,NMAX),v(3,NMAX),xend(3,NMAX),vend(3,NMAX)
       real*8 a(3,NMAX),a0(3,NMAX),d(6,NMAX,8),xscal(NMAX),vscal(NMAX)
+
+      ! =========================
+      ! VARIABLES FOR YORP EFFECT
+      ! =========================
+      ! Parameters for YORP vector field
+      real*8 rpar(5)
+      ! Variables for integration and output
+      real*8 y_yorpnew(2)
+      real*8 gamnew, Pnew
+      real*8 gamma_new, omega_new
+      logical out_flag
+      ! Variables for computation of the Yarkovsky drift
+      real*8 pos(3), vel(3), energy, sma
+      real*8 alpha, epsi
+      real*8 dadt
+      ! Collision reorientation flag
+      logical reorient_flag
+      ! Mass fraction for mass shedding event and critical period for
+      ! mass shedding
+      real*8 q_fact
+      real*8 crit_period
+      ! Variables for the stochastic YORP
+      real*8 tau_yorp
+      real*8 elap_time
+      ! Asteroid name
+      character*15 astname
 c
 c------------------------------------------------------------------------------
 c
+
+      !=====================================================
+      !            SPIN AXIS INTEGRATION STEP
+      !=====================================================
+      ! NOTE: do this only if the integration with Yarkovsky 
+      ! force is required AND if spin-axis is required
+      !
+      ! Check if we need to make a step in (\omega, \gamma)
+      out_flag = .false.
+      if(opt(8) .eq. 1
+     %       .and.
+     %   yorp_flag .eq. 1
+     %       .and.
+     %   abs(time-t_yorp) .gt. h_yorp)then
+         ! Update the time first
+         t_yorp = t_yorp + h_yorp
+         ! If we have to make a step, update the states of (\omega,
+         ! \gamma) for all the bodies, and write the output on a file.
+         do j=nbig+1, nbod
+            ! =========================================
+            !    CHECK FOR COLLISION RE-ORIENTATION
+            ! =========================================
+            ! Check if collision reorientation is occurring for P > 1000h
+            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+               call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
+     %                            reorient_flag)
+               ! If a collisional reorientation is occurring, generate new
+               ! initial conditions for \gamma and \omega and take new
+               ! functions f and g
+               if(reorient_flag)then
+                  call spin_state_new(gamma_new, omega_new)
+                  y_yorp(j, 1) = omega_new
+                  y_yorp(j, 2) = gamma_new
+                  ! Choose new f and g
+                  call shape_gen(K_ast(j), 
+     %                           coeff_ast(j,1), coeff_ast(j,2))
+               endif
+            endif
+            ! ===========================================
+            !      CHECK FOR MASS SHEDDING EVENTS       
+            ! ===========================================
+            ! Assume mass shedding if the rotation period is too small.
+            ! For this case, we divide two cases: if the density is low, 
+            ! we use a low cohesion P = 10 Pa, while if it is large we assume 
+            ! a large cohesion of P = 1000 Pa. The critical spin limit
+            ! at small size is computed using the analytical formulas by
+            ! Hu et al. 2021.
+            call crit_rot_period(rho_ast(j), D_ast(j), crit_period)
+            if(1.d0/y_yorp(j,1)*d2h.lt.crit_period)then
+               ! \gamma is unchanged, while \omega is computed anew
+               ! Generate a random ratio for the mass shed
+               call random_ratio(q_fact)
+               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               y_yorp(j, 1) = omega_new
+               ! Choose new f and g
+               call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
+            endif
+            ! ===========================================
+            !  CHECK FOR STOCHASTIC EVENTS, IF REQUIRED  
+            ! ===========================================
+            if(stoc_yorp_flag.eq.1)then
+               ! Compute tau_yorp (in years) as a function of the size
+               ! tau_yorp = 0.25 My * D(km)
+               tau_yorp  = 0.25d6*D_ast(j)/1000.d0
+               ! Compute the time elapsed from the last event, in year
+               elap_time = abs(time*d2y-last_stoc_event(j)) 
+               ! Check if a time of tau_yorp has elapsed from the last
+               ! event
+               if(elap_time.gt.tau_yorp)then
+                  ! If yes, choose new f and g
+                  call shape_gen(K_ast(j), coeff_ast(j,1), 
+     %                           coeff_ast(j,2))
+                  ! Update the time of the last stochastic event, saved
+                  ! in years
+                  last_stoc_event(j) = time*d2y
+               endif
+            endif
+            ! ===========================================
+            !    INTEGRATION STEP OF SPIN DYNAMICS       
+            ! ===========================================
+            ! Take the parameters for YORP vector field
+            rpar(1) = rho_ast(j)
+            rpar(2) = sma_ast(j)
+            rpar(3) =   D_ast(j)
+            rpar(4) = coeff_ast(j, 1)
+            rpar(5) = coeff_ast(j, 2)
+            ! Update the state with rk4
+            call rk4(y_yorp(j, 1:2), h_yorp, y_yorpnew, rpar)  
+            ! ===========================================
+            !        CHECK FOR REQUIRED OUTPUT           
+            ! ===========================================
+            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
+     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+     %         enable_out.eq.1)then
+               ! If that is the case, write the current integration
+               ! in the file. The output value is computed
+               ! by linear interpolation between the timestep at time t
+               ! and the timestep at time t+h
+               call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
+     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
+     %          dadt_My(j))
+               if(.not.out_flag)then
+                  out_flag = .true.
+               endif
+            endif
+            ! Update the variable
+            y_yorp(j, 1:2) = y_yorpnew(1:2)
+            ! ===========================================
+            !         UPDATE THE YARKOVSKY EFFECT        
+            ! ===========================================
+            alpha = alpha_ast(j)
+            epsi  =  epsi_ast(j)
+            ! Compute the new semimajor axis
+            pos(1:3) = x0(1:3, j)
+            vel(1:3) = v0(1:3, j)
+            energy   = 0.5d0*norm2(vel)**2 - mass(1)/norm2(pos)
+            sma      = -mass(1)/(2.d0*energy)
+            ! Update also the global variable with the new semimajor axis
+            sma_ast(j) = sma
+            ! Compute new gamma and new P
+            Pnew   = 1.d0/y_yorp(j, 1)*d2h
+            gamnew = y_yorp(j, 2)*rad2deg
+            ! Update Yarkovsky drift
+            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+     %                      0.5d0*D_ast(j), sma, gamnew, 
+     %                      Pnew, alpha, epsi, dadt)
+            dadt_My(j) = dadt
+         enddo
+         ! If output was performed, increase the variable keeping track
+         ! of the output time
+         if(out_flag)then
+            time_out = time_out + dt_out
+         endif
+      endif
+
       tol2 = tol * tol
 c
 c Calculate arrays used to scale the relative error (R^2 for position and
@@ -3368,6 +3625,7 @@ c
       subroutine mdt_bs2 (time,h0,hdid,tol,jcen,nbod,nbig,mass,x0,v0,s,
      %  rphys,rcrit,ngf,stat,dtflag,ngflag,opt,nce,ice,jce,force)
 c
+      use yorp_module
       implicit none
       include 'mercury.inc'
 c
@@ -3386,9 +3644,169 @@ c Local
       real*8 tmp0,tmp1,tmp2,errmax,tol2,h,h2(12),hby2,h2by2
       real*8 xend(3,NMAX),b(3,NMAX),c(3,NMAX)
       real*8 a(3,NMAX),a0(3,NMAX),d(6,NMAX,12),xscal(NMAX),vscal(NMAX)
+      ! =========================
+      ! VARIABLES FOR YORP EFFECT
+      ! =========================
+      ! Parameters for YORP vector field
+      real*8 rpar(5)
+      ! Variables for integration and output
+      real*8 y_yorpnew(2)
+      real*8 gamnew, Pnew
+      real*8 gamma_new, omega_new
+      logical out_flag
+      ! Variables for computation of the Yarkovsky drift
+      real*8 pos(3), vel(3), energy, sma
+      real*8 alpha, epsi
+      real*8 dadt
+      ! Collision reorientation flag
+      logical reorient_flag
+      ! Mass fraction for mass shedding event and critical period for
+      ! mass shedding
+      real*8 q_fact
+      real*8 crit_period
+      ! Variables for the stochastic YORP
+      real*8 tau_yorp
+      real*8 elap_time
+      ! Asteroid name
+      character*15 astname
 c
 c------------------------------------------------------------------------------
 c
+
+      !=====================================================
+      !            SPIN AXIS INTEGRATION STEP
+      !=====================================================
+      ! NOTE: do this only if the integration with Yarkovsky 
+      ! force is required AND if spin-axis is required
+      !
+      ! Check if we need to make a step in (\omega, \gamma)
+      out_flag = .false.
+      if(opt(8) .eq. 1
+     %       .and.
+     %   yorp_flag .eq. 1
+     %       .and.
+     %   abs(time-t_yorp) .gt. h_yorp)then
+         ! Update the time first
+         t_yorp = t_yorp + h_yorp
+         ! If we have to make a step, update the states of (\omega,
+         ! \gamma) for all the bodies, and write the output on a file.
+         do j=nbig+1, nbod
+            ! =========================================
+            !    CHECK FOR COLLISION RE-ORIENTATION
+            ! =========================================
+            ! Check if collision reorientation is occurring for P > 1000h
+            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+               call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
+     %                            reorient_flag)
+               ! If a collisional reorientation is occurring, generate new
+               ! initial conditions for \gamma and \omega and take new
+               ! functions f and g
+               if(reorient_flag)then
+                  call spin_state_new(gamma_new, omega_new)
+                  y_yorp(j, 1) = omega_new
+                  y_yorp(j, 2) = gamma_new
+                  ! Choose new f and g
+                  call shape_gen(K_ast(j), 
+     %                           coeff_ast(j,1), coeff_ast(j,2))
+               endif
+            endif
+            ! ===========================================
+            !      CHECK FOR MASS SHEDDING EVENTS       
+            ! ===========================================
+            ! Assume mass shedding if the rotation period is too small.
+            ! For this case, we divide two cases: if the density is low, 
+            ! we use a low cohesion P = 10 Pa, while if it is large we assume 
+            ! a large cohesion of P = 1000 Pa. The critical spin limit
+            ! at small size is computed using the analytical formulas by
+            ! Hu et al. 2021.
+            call crit_rot_period(rho_ast(j), D_ast(j), crit_period)
+            if(1.d0/y_yorp(j,1)*d2h.lt.crit_period)then
+               ! \gamma is unchanged, while \omega is computed anew
+               ! Generate a random ratio for the mass shed
+               call random_ratio(q_fact)
+               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               y_yorp(j, 1) = omega_new
+               ! Choose new f and g
+               call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
+            endif
+            ! ===========================================
+            !  CHECK FOR STOCHASTIC EVENTS, IF REQUIRED  
+            ! ===========================================
+            if(stoc_yorp_flag.eq.1)then
+               ! Compute tau_yorp (in years) as a function of the size
+               ! tau_yorp = 0.25 My * D(km)
+               tau_yorp  = 0.25d6*D_ast(j)/1000.d0
+               ! Compute the time elapsed from the last event, in year
+               elap_time = abs(time*d2y-last_stoc_event(j)) 
+               ! Check if a time of tau_yorp has elapsed from the last
+               ! event
+               if(elap_time.gt.tau_yorp)then
+                  ! If yes, choose new f and g
+                  call shape_gen(K_ast(j), coeff_ast(j,1), 
+     %                           coeff_ast(j,2))
+                  ! Update the time of the last stochastic event, saved
+                  ! in years
+                  last_stoc_event(j) = time*d2y
+               endif
+            endif
+            ! ===========================================
+            !    INTEGRATION STEP OF SPIN DYNAMICS       
+            ! ===========================================
+            ! Take the parameters for YORP vector field
+            rpar(1) = rho_ast(j)
+            rpar(2) = sma_ast(j)
+            rpar(3) =   D_ast(j)
+            rpar(4) = coeff_ast(j, 1)
+            rpar(5) = coeff_ast(j, 2)
+            ! Update the state with rk4
+            call rk4(y_yorp(j, 1:2), h_yorp, y_yorpnew, rpar)  
+            ! ===========================================
+            !        CHECK FOR REQUIRED OUTPUT           
+            ! ===========================================
+            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
+     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+     %         enable_out.eq.1)then
+               ! If that is the case, write the current integration
+               ! in the file. The output value is computed
+               ! by linear interpolation between the timestep at time t
+               ! and the timestep at time t+h
+               call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
+     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
+     %          dadt_My(j))
+               if(.not.out_flag)then
+                  out_flag = .true.
+               endif
+            endif
+            ! Update the variable
+            y_yorp(j, 1:2) = y_yorpnew(1:2)
+            ! ===========================================
+            !         UPDATE THE YARKOVSKY EFFECT        
+            ! ===========================================
+            alpha = alpha_ast(j)
+            epsi  =  epsi_ast(j)
+            ! Compute the new semimajor axis
+            pos(1:3) = x0(1:3, j)
+            vel(1:3) = v0(1:3, j)
+            energy   = 0.5d0*norm2(vel)**2 - mass(1)/norm2(pos)
+            sma      = -mass(1)/(2.d0*energy)
+            ! Update also the global variable with the new semimajor axis
+            sma_ast(j) = sma
+            ! Compute new gamma and new P
+            Pnew   = 1.d0/y_yorp(j, 1)*d2h
+            gamnew = y_yorp(j, 2)*rad2deg
+            ! Update Yarkovsky drift
+            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+     %                      0.5d0*D_ast(j), sma, gamnew, 
+     %                      Pnew, alpha, epsi, dadt)
+            dadt_My(j) = dadt
+         enddo
+         ! If output was performed, increase the variable keeping track
+         ! of the output time
+         if(out_flag)then
+            time_out = time_out + dt_out
+         endif
+      endif
+
       tol2 = tol * tol
 c
 c Calculate arrays used to scale the relative error (R^2 for position and
@@ -3553,6 +3971,7 @@ c
      %  ngflag,opflag,colflag,nclo,iclo,jclo,dclo,tclo,ixvclo,jxvclo,
      %  outfile,mem,lmem)
 c
+      use yorp_module
       implicit none
       include 'mercury.inc'
 c
@@ -3571,6 +3990,32 @@ c Local
       real*8 a(3,NMAX),hby2,hrec,x0(3,NMAX),v0(3,NMAX),mvsum(3),temp
       real*8 angf(3,NMAX),ausr(3,NMAX)
       external mfo_hkce
+
+      ! =========================
+      ! VARIABLES FOR YORP EFFECT
+      ! =========================
+      ! Parameters for YORP vector field
+      real*8 rpar(5)
+      ! Variables for integration and output
+      real*8 y_yorpnew(2)
+      real*8 gamnew, Pnew
+      real*8 gamma_new, omega_new
+      logical out_flag
+      ! Variables for computation of the Yarkovsky drift
+      real*8 pos(3), vel(3), energy, sma
+      real*8 alpha, epsi
+      real*8 dadt
+      ! Collision reorientation flag
+      logical reorient_flag
+      ! Mass fraction for mass shedding event and critical period for
+      ! mass shedding
+      real*8 q_fact
+      real*8 crit_period
+      ! Variables for the stochastic YORP
+      real*8 tau_yorp
+      real*8 elap_time
+      ! Asteroid name
+      character*15 astname
 c
 c------------------------------------------------------------------------------
 c
@@ -3578,6 +4023,140 @@ c
       hby2 = h0 * .5d0
       nclo = 0
       colflag = 0
+
+      !=====================================================
+      !            SPIN AXIS INTEGRATION STEP
+      !=====================================================
+      ! NOTE: do this only if the integration with Yarkovsky 
+      ! force is required AND if spin-axis is required
+      !
+      ! Check if we need to make a step in (\omega, \gamma)
+      out_flag = .false.
+      if(opt(8) .eq. 1
+     %       .and.
+     %   yorp_flag .eq. 1
+     %       .and.
+     %   abs(time-t_yorp) .gt. h_yorp)then
+         ! Update the time first
+         t_yorp = t_yorp + h_yorp
+         ! If we have to make a step, update the states of (\omega,
+         ! \gamma) for all the bodies, and write the output on a file.
+         do j=nbig+1, nbod
+            ! =========================================
+            !    CHECK FOR COLLISION RE-ORIENTATION
+            ! =========================================
+            ! Check if collision reorientation is occurring for P > 1000h
+            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+               call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
+     %                            reorient_flag)
+               ! If a collisional reorientation is occurring, generate new
+               ! initial conditions for \gamma and \omega and take new
+               ! functions f and g
+               if(reorient_flag)then
+                  call spin_state_new(gamma_new, omega_new)
+                  y_yorp(j, 1) = omega_new
+                  y_yorp(j, 2) = gamma_new
+                  ! Choose new f and g
+                  call shape_gen(K_ast(j), 
+     %                           coeff_ast(j,1), coeff_ast(j,2))
+               endif
+            endif
+            ! ===========================================
+            !      CHECK FOR MASS SHEDDING EVENTS       
+            ! ===========================================
+            ! Assume mass shedding if the rotation period is too small.
+            ! For this case, we divide two cases: if the density is low, 
+            ! we use a low cohesion P = 10 Pa, while if it is large we assume 
+            ! a large cohesion of P = 1000 Pa. The critical spin limit
+            ! at small size is computed using the analytical formulas by
+            ! Hu et al. 2021.
+            call crit_rot_period(rho_ast(j), D_ast(j), crit_period)
+            if(1.d0/y_yorp(j,1)*d2h.lt.crit_period)then
+               ! \gamma is unchanged, while \omega is computed anew
+               ! Generate a random ratio for the mass shed
+               call random_ratio(q_fact)
+               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               y_yorp(j, 1) = omega_new
+               ! Choose new f and g
+               call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
+            endif
+            ! ===========================================
+            !  CHECK FOR STOCHASTIC EVENTS, IF REQUIRED  
+            ! ===========================================
+            if(stoc_yorp_flag.eq.1)then
+               ! Compute tau_yorp (in years) as a function of the size
+               ! tau_yorp = 0.25 My * D(km)
+               tau_yorp  = 0.25d6*D_ast(j)/1000.d0
+               ! Compute the time elapsed from the last event, in year
+               elap_time = abs(time*d2y-last_stoc_event(j)) 
+               ! Check if a time of tau_yorp has elapsed from the last
+               ! event
+               if(elap_time.gt.tau_yorp)then
+                  ! If yes, choose new f and g
+                  call shape_gen(K_ast(j), coeff_ast(j,1), 
+     %                           coeff_ast(j,2))
+                  ! Update the time of the last stochastic event, saved
+                  ! in years
+                  last_stoc_event(j) = time*d2y
+               endif
+            endif
+            ! ===========================================
+            !    INTEGRATION STEP OF SPIN DYNAMICS       
+            ! ===========================================
+            ! Take the parameters for YORP vector field
+            rpar(1) = rho_ast(j)
+            rpar(2) = sma_ast(j)
+            rpar(3) =   D_ast(j)
+            rpar(4) = coeff_ast(j, 1)
+            rpar(5) = coeff_ast(j, 2)
+            ! Update the state with rk4
+            call rk4(y_yorp(j, 1:2), h_yorp, y_yorpnew, rpar)  
+            ! ===========================================
+            !        CHECK FOR REQUIRED OUTPUT           
+            ! ===========================================
+            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
+     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+     %         enable_out.eq.1)then
+               ! If that is the case, write the current integration
+               ! in the file. The output value is computed
+               ! by linear interpolation between the timestep at time t
+               ! and the timestep at time t+h
+               call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
+     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
+     %          dadt_My(j))
+               if(.not.out_flag)then
+                  out_flag = .true.
+               endif
+            endif
+            ! Update the variable
+            y_yorp(j, 1:2) = y_yorpnew(1:2)
+            ! ===========================================
+            !         UPDATE THE YARKOVSKY EFFECT        
+            ! ===========================================
+            alpha = alpha_ast(j)
+            epsi  =  epsi_ast(j)
+            ! Compute the new semimajor axis
+            pos(1:3) = x(1:3, j)
+            vel(1:3) = v(1:3, j)
+            energy   = 0.5d0*norm2(vel)**2 - m(1)/norm2(pos)
+            sma      = -m(1)/(2.d0*energy)
+            ! Update also the global variable with the new semimajor axis
+            sma_ast(j) = sma
+            ! Compute new gamma and new P
+            Pnew   = 1.d0/y_yorp(j, 1)*d2h
+            gamnew = y_yorp(j, 2)*rad2deg
+            ! Update Yarkovsky drift
+            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+     %                      0.5d0*D_ast(j), sma, gamnew, 
+     %                      Pnew, alpha, epsi, dadt)
+            dadt_My(j) = dadt
+         enddo
+         ! If output was performed, increase the variable keeping track
+         ! of the output time
+         if(out_flag)then
+            time_out = time_out + dt_out
+         endif
+      endif
 c
 c If accelerations from previous call are not valid, calculate them now
       if (dtflag.ne.2) then
@@ -3869,6 +4448,7 @@ c
      %  ngflag,opflag,colflag,nclo,iclo,jclo,dclo,tclo,ixvclo,jxvclo,
      %  outfile,mem,lmem)
 c
+      use yorp_module
       implicit none
       include 'mercury.inc'
 c
@@ -3887,12 +4467,172 @@ c Local
       real*8 xj(3,NMAX),vj(3,NMAX),a(3,NMAX),gm(NMAX),hby2,thit1,temp
       real*8 msofar,minside,x0(3,NMAX),v0(3,NMAX),dhit(CMAX),thit(CMAX)
       real*8 angf(3,NMAX),ausr(3,NMAX)
+      ! =========================
+      ! VARIABLES FOR YORP EFFECT
+      ! =========================
+      ! Parameters for YORP vector field
+      real*8 rpar(5)
+      ! Variables for integration and output
+      real*8 y_yorpnew(2)
+      real*8 gamnew, Pnew
+      real*8 gamma_new, omega_new
+      logical out_flag
+      ! Variables for computation of the Yarkovsky drift
+      real*8 pos(3), vel(3), energy, sma
+      real*8 alpha, epsi
+      real*8 dadt
+      ! Collision reorientation flag
+      logical reorient_flag
+      ! Mass fraction for mass shedding event and critical period for
+      ! mass shedding
+      real*8 q_fact
+      real*8 crit_period
+      ! Variables for the stochastic YORP
+      real*8 tau_yorp
+      real*8 elap_time
+      ! Asteroid name
+      character*15 astname
 c
 c------------------------------------------------------------------------------
-c
+
       save a, xj, gm, angf, ausr
       hby2 = .5d0 * h0
       nclo = 0
+
+      !=====================================================
+      !            SPIN AXIS INTEGRATION STEP
+      !=====================================================
+      ! NOTE: do this only if the integration with Yarkovsky 
+      ! force is required AND if spin-axis is required
+      !
+      ! Check if we need to make a step in (\omega, \gamma)
+      out_flag = .false.
+      if(opt(8) .eq. 1
+     %       .and.
+     %   yorp_flag .eq. 1
+     %       .and.
+     %   abs(time-t_yorp) .gt. h_yorp)then
+         ! Update the time first
+         t_yorp = t_yorp + h_yorp
+         ! If we have to make a step, update the states of (\omega,
+         ! \gamma) for all the bodies, and write the output on a file.
+         do j=nbig+1, nbod
+            ! =========================================
+            !    CHECK FOR COLLISION RE-ORIENTATION
+            ! =========================================
+            ! Check if collision reorientation is occurring for P > 1000h
+            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+               call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
+     %                            reorient_flag)
+               ! If a collisional reorientation is occurring, generate new
+               ! initial conditions for \gamma and \omega and take new
+               ! functions f and g
+               if(reorient_flag)then
+                  call spin_state_new(gamma_new, omega_new)
+                  y_yorp(j, 1) = omega_new
+                  y_yorp(j, 2) = gamma_new
+                  ! Choose new f and g
+                  call shape_gen(K_ast(j), 
+     %                           coeff_ast(j,1), coeff_ast(j,2))
+               endif
+            endif
+            ! ===========================================
+            !      CHECK FOR MASS SHEDDING EVENTS       
+            ! ===========================================
+            ! Assume mass shedding if the rotation period is too small.
+            ! For this case, we divide two cases: if the density is low, 
+            ! we use a low cohesion P = 10 Pa, while if it is large we assume 
+            ! a large cohesion of P = 1000 Pa. The critical spin limit
+            ! at small size is computed using the analytical formulas by
+            ! Hu et al. 2021.
+            call crit_rot_period(rho_ast(j), D_ast(j), crit_period)
+            if(1.d0/y_yorp(j,1)*d2h.lt.crit_period)then
+               ! \gamma is unchanged, while \omega is computed anew
+               ! Generate a random ratio for the mass shed
+               call random_ratio(q_fact)
+               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               y_yorp(j, 1) = omega_new
+               ! Choose new f and g
+               call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
+            endif
+            ! ===========================================
+            !  CHECK FOR STOCHASTIC EVENTS, IF REQUIRED  
+            ! ===========================================
+            if(stoc_yorp_flag.eq.1)then
+               ! Compute tau_yorp (in years) as a function of the size
+               ! tau_yorp = 0.25 My * D(km)
+               tau_yorp  = 0.25d6*D_ast(j)/1000.d0
+               ! Compute the time elapsed from the last event, in year
+               elap_time = abs(time*d2y-last_stoc_event(j)) 
+               ! Check if a time of tau_yorp has elapsed from the last
+               ! event
+               if(elap_time.gt.tau_yorp)then
+                  ! If yes, choose new f and g
+                  call shape_gen(K_ast(j), coeff_ast(j,1), 
+     %                           coeff_ast(j,2))
+                  ! Update the time of the last stochastic event, saved
+                  ! in years
+                  last_stoc_event(j) = time*d2y
+               endif
+            endif
+            ! ===========================================
+            !    INTEGRATION STEP OF SPIN DYNAMICS       
+            ! ===========================================
+            ! Take the parameters for YORP vector field
+            rpar(1) = rho_ast(j)
+            rpar(2) = sma_ast(j)
+            rpar(3) =   D_ast(j)
+            rpar(4) = coeff_ast(j, 1)
+            rpar(5) = coeff_ast(j, 2)
+            ! Update the state with rk4
+            call rk4(y_yorp(j, 1:2), h_yorp, y_yorpnew, rpar)  
+            ! ===========================================
+            !        CHECK FOR REQUIRED OUTPUT           
+            ! ===========================================
+            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
+     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+     %         enable_out.eq.1)then
+               ! If that is the case, write the current integration
+               ! in the file. The output value is computed
+               ! by linear interpolation between the timestep at time t
+               ! and the timestep at time t+h
+               call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
+     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
+     %          dadt_My(j))
+               if(.not.out_flag)then
+                  out_flag = .true.
+               endif
+            endif
+            ! Update the variable
+            y_yorp(j, 1:2) = y_yorpnew(1:2)
+            ! ===========================================
+            !         UPDATE THE YARKOVSKY EFFECT        
+            ! ===========================================
+            alpha = alpha_ast(j)
+            epsi  =  epsi_ast(j)
+            ! Compute the new semimajor axis
+            pos(1:3) = x(1:3, j)
+            vel(1:3) = v(1:3, j)
+            energy   = 0.5d0*norm2(vel)**2 - m(1)/norm2(pos)
+            sma      = -m(1)/(2.d0*energy)
+            ! Update also the global variable with the new semimajor axis
+            sma_ast(j) = sma
+            ! Compute new gamma and new P
+            Pnew   = 1.d0/y_yorp(j, 1)*d2h
+            gamnew = y_yorp(j, 2)*rad2deg
+            ! Update Yarkovsky drift
+            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+     %                      0.5d0*D_ast(j), sma, gamnew, 
+     %                      Pnew, alpha, epsi, dadt)
+            dadt_My(j) = dadt
+         enddo
+         ! If output was performed, increase the variable keeping track
+         ! of the output time
+         if(out_flag)then
+            time_out = time_out + dt_out
+         endif
+      endif
+
 c
 c If accelerations from previous call are not valid, calculate them now,
 c and also the Jacobi coordinates XJ, and effective central masses GM.
@@ -3998,6 +4738,7 @@ c
       subroutine mdt_ra15 (time,t,tdid,tol,jcen,nbod,nbig,mass,x1,v1,
      %  spin,rphys,rcrit,ngf,stat,dtflag,ngflag,opt,nce,ice,jce,force)
 c
+      use yorp_module
       implicit none
       include 'mercury.inc'
 c
@@ -4015,6 +4756,32 @@ c Local
       real*8 g(7,3*NMAX),b(7,3*NMAX),e(7,3*NMAX)
       real*8 h(8),xc(8),vc(7),c(21),d(21),r(28),s(9)
       real*8 q,q2,q3,q4,q5,q6,q7,temp,gk
+
+      ! =========================
+      ! VARIABLES FOR YORP EFFECT
+      ! =========================
+      ! Parameters for YORP vector field
+      real*8 rpar(5)
+      ! Variables for integration and output
+      real*8 y_yorpnew(2)
+      real*8 gamnew, Pnew
+      real*8 gamma_new, omega_new
+      logical out_flag
+      ! Variables for computation of the Yarkovsky drift
+      real*8 pos(3), vel(3), energy, sma
+      real*8 alpha, epsi
+      real*8 dadt
+      ! Collision reorientation flag
+      logical reorient_flag
+      ! Mass fraction for mass shedding event and critical period for
+      ! mass shedding
+      real*8 q_fact
+      real*8 crit_period
+      ! Variables for the stochastic YORP
+      real*8 tau_yorp
+      real*8 elap_time
+      ! Asteroid name
+      character*15 astname
 c
 c------------------------------------------------------------------------------
 c
@@ -4035,6 +4802,142 @@ c  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
      %  .01388888888888889d0/
       data vc/.5d0,.3333333333333333d0,.25d0,.2d0,
      %  .1666666666666667d0,.1428571428571429d0,.125d0/
+
+      !=====================================================
+      !            SPIN AXIS INTEGRATION STEP
+      !=====================================================
+      ! NOTE: do this only if the integration with Yarkovsky 
+      ! force is required AND if spin-axis is required
+      !
+      ! Check if we need to make a step in (\omega, \gamma)
+      out_flag = .false.
+      if(opt(8) .eq. 1
+     %       .and.
+     %   yorp_flag .eq. 1
+     %       .and.
+     %   abs(time-t_yorp) .gt. h_yorp)then
+         ! Update the time first
+         t_yorp = t_yorp + h_yorp
+         ! If we have to make a step, update the states of (\omega,
+         ! \gamma) for all the bodies, and write the output on a file.
+         do j=nbig+1, nbod
+            ! =========================================
+            !    CHECK FOR COLLISION RE-ORIENTATION
+            ! =========================================
+            ! Check if collision reorientation is occurring for P > 1000h
+            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+               call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
+     %                            reorient_flag)
+               ! If a collisional reorientation is occurring, generate new
+               ! initial conditions for \gamma and \omega and take new
+               ! functions f and g
+               if(reorient_flag)then
+                  call spin_state_new(gamma_new, omega_new)
+                  y_yorp(j, 1) = omega_new
+                  y_yorp(j, 2) = gamma_new
+                  ! Choose new f and g
+                  call shape_gen(K_ast(j), 
+     %                           coeff_ast(j,1), coeff_ast(j,2))
+               endif
+            endif
+            ! ===========================================
+            !      CHECK FOR MASS SHEDDING EVENTS       
+            ! ===========================================
+            ! Assume mass shedding if the rotation period is too small.
+            ! For this case, we divide two cases: if the density is low, 
+            ! we use a low cohesion P = 10 Pa, while if it is large we assume 
+            ! a large cohesion of P = 1000 Pa. The critical spin limit
+            ! at small size is computed using the analytical formulas by
+            ! Hu et al. 2021.
+            call crit_rot_period(rho_ast(j), D_ast(j), crit_period)
+            if(1.d0/y_yorp(j,1)*d2h.lt.crit_period)then
+               ! \gamma is unchanged, while \omega is computed anew
+               ! Generate a random ratio for the mass shed
+               call random_ratio(q_fact)
+               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               y_yorp(j, 1) = omega_new
+               ! Choose new f and g
+               call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
+            endif
+            ! ===========================================
+            !  CHECK FOR STOCHASTIC EVENTS, IF REQUIRED  
+            ! ===========================================
+            if(stoc_yorp_flag.eq.1)then
+               ! Compute tau_yorp (in years) as a function of the size
+               ! tau_yorp = 0.25 My * D(km)
+               tau_yorp  = 0.25d6*D_ast(j)/1000.d0
+               ! Compute the time elapsed from the last event, in year
+               elap_time = abs(time*d2y-last_stoc_event(j)) 
+               ! Check if a time of tau_yorp has elapsed from the last
+               ! event
+               if(elap_time.gt.tau_yorp)then
+                  ! If yes, choose new f and g
+                  call shape_gen(K_ast(j), coeff_ast(j,1), 
+     %                           coeff_ast(j,2))
+                  ! Update the time of the last stochastic event, saved
+                  ! in years
+                  last_stoc_event(j) = time*d2y
+               endif
+            endif
+            ! ===========================================
+            !    INTEGRATION STEP OF SPIN DYNAMICS       
+            ! ===========================================
+            ! Take the parameters for YORP vector field
+            rpar(1) = rho_ast(j)
+            rpar(2) = sma_ast(j)
+            rpar(3) =   D_ast(j)
+            rpar(4) = coeff_ast(j, 1)
+            rpar(5) = coeff_ast(j, 2)
+            ! Update the state with rk4
+            call rk4(y_yorp(j, 1:2), h_yorp, y_yorpnew, rpar)  
+            ! ===========================================
+            !        CHECK FOR REQUIRED OUTPUT           
+            ! ===========================================
+            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
+     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+     %         enable_out.eq.1)then
+               ! If that is the case, write the current integration
+               ! in the file. The output value is computed
+               ! by linear interpolation between the timestep at time t
+               ! and the timestep at time t+h
+               call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
+     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
+     %          dadt_My(j))
+               if(.not.out_flag)then
+                  out_flag = .true.
+               endif
+            endif
+            ! Update the variable
+            y_yorp(j, 1:2) = y_yorpnew(1:2)
+            ! ===========================================
+            !         UPDATE THE YARKOVSKY EFFECT        
+            ! ===========================================
+            alpha = alpha_ast(j)
+            epsi  =  epsi_ast(j)
+            ! Compute the new semimajor axis
+            pos(1:3) = x1(3*(j-1)+1:3*j)
+            vel(1:3) = v1(3*(j-1)+1:3*j)
+            energy   = 0.5d0*norm2(vel)**2 - mass(1)/norm2(pos)
+            sma      = -mass(1)/(2.d0*energy)
+            ! Update also the global variable with the new semimajor axis
+            sma_ast(j) = sma
+            ! Compute new gamma and new P
+            Pnew   = 1.d0/y_yorp(j, 1)*d2h
+            gamnew = y_yorp(j, 2)*rad2deg
+            ! Update Yarkovsky drift
+            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+     %                      0.5d0*D_ast(j), sma, gamnew, 
+     %                      Pnew, alpha, epsi, dadt)
+            dadt_My(j) = dadt
+         enddo
+         ! If output was performed, increase the variable keeping track
+         ! of the output time
+         if(out_flag)then
+            time_out = time_out + dt_out
+         endif
+      endif
+      ! ===============================================================
+
 c
 c If this is first call to the subroutine, set values of the constant arrays
 c (R = R21, R31, R32, R41, R42, R43 in Everhart's paper.)
@@ -5727,6 +6630,7 @@ c
      %  jcen,en,am,cefac,ndump,nfun,nbod,nbig,m,x,v,s,rho,rceh,stat,id,
      %  epoch,ngf,opt,opflag,ngflag,outfile,dumpfile,lmem,mem)
 c
+      use yorp_module, only: sma_ast
       implicit none
       include 'mercury.inc'
 c
@@ -6065,6 +6969,8 @@ c If required, read Cartesian coordinates, velocities and spins of the bodies
           p = (p + n) * DR
           n = n * DR
           temp = m(nbod)  +  m(1)
+
+          sma_ast(nbod) = a
 c
 c Alternatively, read Cometary or asteroidal elements
           if (informat.eq.3) then
@@ -6873,6 +7779,7 @@ c
       subroutine mxx_elim (nbod,nbig,m,x,v,s,rho,rceh,rcrit,ngf,stat,
      %  id,mem,lmem,outfile,nelim)
 c
+      use yorp_module
       implicit none
       include 'mercury.inc'
 c
@@ -6885,9 +7792,6 @@ c Input/Output
 c
 c Local
       integer j, k, l, nbigelim, elim(NMAX+1)
-
-      real*8 dadt_My(NMAX)
-      common /Yarkovsky/ dadt_My
 c
 c------------------------------------------------------------------------------
 c
@@ -6913,7 +7817,6 @@ c Eliminate unwanted objects
           v(1,j) = v(1,l)
           v(2,j) = v(2,l)
           v(3,j) = v(3,l)
-          dadt_MY(j) = dadt_My(l)
           m(j)   = m(l)
           s(1,j) = s(1,l)
           s(2,j) = s(2,l)
@@ -6926,6 +7829,22 @@ c Eliminate unwanted objects
           ngf(2,j) = ngf(2,l)
           ngf(3,j) = ngf(3,l)
           ngf(4,j) = ngf(4,l)
+c Fix the arrays with YORP parameters
+          dadt_MY(j)         = dadt_MY(l) 
+          rho_ast(j)         = rho_ast(l) 
+          K_ast(j)           = K_ast(l)
+          C_ast(j)           = C_ast(l)
+          D_ast(j)           = D_ast(l)
+          gamma_ast(j)       = gamma_ast(l)
+          omega_ast(j)       = omega_ast(l)
+          P_ast(j)           = P_ast(l)
+          sma_ast(j)         = sma_ast(l)
+          alpha_ast(j)       = alpha_ast(l)
+          epsi_ast(j)        = epsi_ast(l)
+          coeff_ast(j, 1:2)  = coeff_ast(l, 1:2)
+          y_yorp(j, 1:2)     = y_yorp(l, 1:2)
+          id_copy(j)         = id_copy(l)
+          last_stoc_event(j) = last_stoc_event(l)
         end do
       end do
 c

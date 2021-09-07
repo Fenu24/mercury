@@ -1,39 +1,3 @@
-**Fortran NBody integrator**
-
-_This software was initially created by John E. Chambers. It is the NBody integrator based on Bulirsh-Stoer, Everhart and other methods. It can "out of box" integrate every system like Solar System, 3 body problem and so on. The configuration is really simple. Current package is preconfigured for Linux and Mac OS X users with compile and clean tasks. Also i have added the adapted written in ruby for my purposes but it is really simple to modify it_
-
-*How to use*
-
-To compile on Linux or Mac OS X just run compile.sh. You need to have gfortran compiler. 
-If you don't have you need to install it. For other compilers change the corresponding lines
-in compile.sh
-
-To clean the directory run clean.sh
-
-Sample datas are stores in *.in.sample files. If you want to try the integrator just run the compile.sh
-and answer "yes" for the question about creating sample files.
-
-**Original message by John E. Chambers**
-
------------------------------------------------------------------------
------------------------------------------------------------------------
-THIS VERSION OF MERCURY6 PACKAGE WAS MODIFIED BY I. DOVGALEV
-TO PROVIDE TRUE DOUBLE PRECISION CALCULATIONS. ALSO, THE INITIAL DATA
-FOR PLANETS IN "big.in" FILE WAS UPDATED (see http://ssd.jpl.nasa.gov).
-**2016-12-05**
-
-[2016-12-08]: Provided length for object names is now 25 (instead of 8
-in older versions). Please take into account.
-
-[2016-12-12]: Compile.sh has been modified. Now to create input data
-files from samples run the compile.sh simply. If you want to use your
-own input data files run compile.sh with key -s
-
-**Please note that if you use other programs to create input data files
-you must keep "fortran" double precision format (e.g. use "d" exponent)**
-
------------------------------------------------------------------------
------------------------------------------------------------------------
 
                M A N U A L   F O R   T H E   M E R C U R Y   I N T E G R A T O R
                =================================================================
