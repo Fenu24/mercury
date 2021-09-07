@@ -1,4 +1,4 @@
-# Manual for the augment MERCURY integrator
+# Manual for the augmented MERCURY integrator
 
 
 This software is an augmented version of the MERCURY integrator, that was  originally developed by John E. Chambers. The new features included in this package are specifically designed for the propagation of small solar system objects, i.e. asteroids.
