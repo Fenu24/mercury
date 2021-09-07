@@ -68,18 +68,18 @@ input files are needed.
      run. Make sure that all the objects contained in the small.in file are also here.
      Here you have to provide, on each row:
          - the name of the asteroid
-         - the density $\rho$ (kg/m$^3$)
-         - the thermal conductivity K (SI units)
-         - the heat capacity C (SI units)
+         - the density &rho; (kg/m^3)
+         - the thermal conductivity K (W/m/K)
+         - the heat capacity C (J/kg/K)
          - the diameter    D (meters)
-         - the obliquity  (degrees)
-         - the rotation period        (hours)
-         - the absorption coefficient (usually set to 1)
-         - the emissivity             (usually set to 1)
+         - the obliquity  &gamma; (degrees)
+         - the rotation period  P (hours)
+         - the absorption coefficient &alpha; (usually set to 1)
+         - the emissivity &epsilon; (usually set to 1)
 
-**NOTE 1** When writing real numbers, please make sure they are written with at least a decimal number, or by using the d0 FORTRAN notation.
+**NOTE 1.** When writing real numbers, please make sure they are written with at least a decimal number, or by using the d0 FORTRAN notation.
 
-**NOTE 2** To add the Yarkovsky effect to the model, make sure that the field "include user-defined force" in the original param.in input file for MERCURY is set to yes.
+**NOTE 2.** To add the Yarkovsky effect to the model, make sure that the field *include user-defined force* in the original param.in input file for MERCURY is set to *yes*.
 
 
 ## Run a simulation and output files
