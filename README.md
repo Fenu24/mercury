@@ -5,7 +5,7 @@ This software is an augmented version of the MERCURY integrator, that was  origi
 
 More specifically, the Yarkovsky effect is added to the gravitational vector field, and the spin-axis evolution due to the YORP effect is integrated together with the orbital dynamics. Technical details of the equations and of the implementation can be found in the paper
 
-" ", M. Fenucci and B. Novakovic, Serbian Astronomical Journal
+" ", M. Fenucci and B. Novaković, Serbian Astronomical Journal
 
 If you publish results using this version of the integrator, please reference the package using the above paper. 
 
@@ -48,8 +48,7 @@ Before using the package for the first time, the code needs to be compiled. To f
 
 ## Files preparation
 
-To run simulations that include the Yarkovsky/YORP effect in the model, some additional
-input files are needed. 
+To run simulations that include the Yarkovsky/YORP effect in the model, some additional input files are needed. 
    1. **yorp_f.txt**, **yorp_g.txt**: these are files containing a discretization of the mean torques shown in Fig. 1 of the reference paper. They are supposed to be placed in a subfolder called *input*. A copy of these files can be found in the *dat* folder of the distribution
    2. **yorp.in**: this is a file containing parameters for the integration of the spin-axis
      dynamics. This file is also supposed to be contained in a subfolder called *input*.
@@ -81,11 +80,54 @@ input files are needed.
 
 **NOTE 2.** To add the Yarkovsky effect to the model, make sure that the field *include user-defined force* in the original param.in input file for MERCURY is set to *yes*.
 
+**NOTE 3.** To prepare all the files needed for a standard MERCURY integration, please refer to the original README manual written by John E. Chambers. A copy of this manual can be found in the *doc* directory.
 
-## Run a simulation and output files
+## How to run a simulation and tests
+We suggest the user to run each simulation in a separate folder. To this purpose, we created a directory called *integrations* where you can add folders for simulations. This directory contains also some test runs that you can use as a guide for the file preparation. To run a simulation, we suggest to follow these steps:
+1. Make sure the code is compiled
+2. Move in the *integrations* folder
+3. Create a directory for your own simulation
 
-## Test runs
+            mkdir myInteg
+
+4. Move in your folder and create links to the binaries
+
+            cd myInteg
+            ln -s ../../bin/mercury6_yorp
+            ln -s ../../bin/element6
+            ln -s ../../bin/close6
+
+5. Create the basic file 
+   - big.in
+   - small.in
+   - param.in
+   - files.in
+   - message.in
+    
+  needed to run the MERCURY integrator. Examples of these files can be found in the directory *dat/mercury*
+
+7. Create the yarkovsky.in file
+
+8. Create the folder for input
+
+            mkdir input
+            cd input
+            
+   and copy here the files needed for the YORP effect integration
+   
+            cp ../../../dat/yorp_f.txt .
+            cp ../../../dat/yorp_g.txt .
+            
+   Create here also the file yorp.in with options for the spin dynamics integration.
+
+9. Once everything is ready, you can go back to the directory myInteg, and run the code with
+
+            ./mercury6_yorp
+            
+**Note.** You may want to run the program in background for long-term integrations.
+   
+### Run the test simulation
 
 ## Refereces
-- *Mercury and OrbFit packages for numerical integration of planetary systems: implementations of the Yarkovsky and YORP effects*
+- *Mercury and OrbFit packages for numerical integration of planetary systems: implementations of the Yarkovsky and YORP effects*, M. Fenucci and B. Novaković, Serbian Astronomical Journal
 
