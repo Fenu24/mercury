@@ -84,7 +84,7 @@ automatically do the job. To compile the source code, please follow these steps
 
          or, if you want to use the Intel compiler
             
-            ./config.sh -O gfortran
+            ./config.sh -O ifort
 
      ii) Run the Makefile to compile the source code. To this purpose, you can type
 
