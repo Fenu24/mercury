@@ -26,12 +26,7 @@ The modified version of the MERCURY integrator contains a new driver to perform 
 This is the integration program, and it can be used to propagate numerically the dynamics of small solar system objects under the combined influence of the Yarkovsky/YORP effects. This program produces the same output files produced by the standard version of the MERCURY integrator, and additional files containing the spin-axis dynamics of the small bodies on request.
 
 Before using the package for the first time, the code needs to be compiled. To facilitate the user, the distribution comes with a configuration script and a Makefile that automatically do the job. To compile the source code, please follow these steps
-1. Choose the compiler and the compilation options by running the config.sh script. By running the script without further options, you will receive an help message. The script permits to choose between two different compiler: 
-            - GNU gfortran compiler
-            - Intel ifort compiler
-         An additional option defines the compilation flags, and the user can select the
-         optimization flags. For instance, if you want to use the GNU gfortran compiler, you can
-         run the script as
+1. Choose the compiler and the compilation options by running the config.sh script. By running the script without further options, you will receive an help message. The script permits to choose between two different compiler: GNU gfortran, and Intel ifort. An additional option defines the compilation flags, and the user can select the optimization flags. For instance, if you want to use the GNU gfortran compiler, you can run the script as
            
            ./config.sh -O gfortran
             
