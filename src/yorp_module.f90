@@ -74,6 +74,8 @@ module yorp_module
    real(kind=dkind)   ::         sma_ast(nmax)
    real(kind=dkind)   ::       coeff_ast(nmax, 2)
    real(kind=dkind)   :: last_stoc_event(nmax)
+   ! For YORP model
+   real(kind=dkind)   :: c_YORP, c_REOR, c_STOC
    ! Variables for the integration:
    !     t_yorp: current time
    !     h_yorp: time step
@@ -99,7 +101,7 @@ module yorp_module
    ! Public variables
    public :: dadt_MY, rho_ast, K_ast, C_ast, D_ast, gamma_ast, omega_ast, P_ast, sma_ast, &
           &  alpha_ast, epsi_ast, yorp_flag, dt_out, time_out, stoc_yorp_flag, last_stoc_event, &
-          &  K_fact, enable_out
+          &  K_fact, enable_out, c_YORP, c_REOR, c_STOC
    public :: t_yorp, h_yorp, y_yorp, id_copy, tstart_copy, coeff_ast
    public :: h2s, s2h, d2s, s2d, y2d, d2y, y2s, s2y, yr2my, s2my, my2s, h2d, d2h, deg2rad, rad2deg
    contains
@@ -137,14 +139,18 @@ module yorp_module
       if(abs(ytph(2)).lt.1.d-10)then
          ytph(2) = 0.d0
       endif
+      ! If the period is too long, put it to 1000
+      if(1.d0/ytph(1)*d2h.gt.1000.d0)then
+         ytph(1) = 1.d0/(1000.d0*h2d)
+      endif
       ! NOTE: this is done to handle the cases that goes asymptotically too fast!
       !       Indeed, in the step of 50 years is too long and they are decelerating very fast,
-      !       we simply set a rotation period of 2000 h and put \gamma to the closest asymptotic
+      !       we simply set a rotation period of 1000 h and put \gamma to the closest asymptotic
       !       value. 
       ! NOTE: the failure of the step is recognized because \omega becomes negative, which does not 
       !       make any physical sense!
       if(ytph(1).lt.0.d0)then
-         ytph(1) = 1.d0/(2000.d0*h2d)
+         ytph(1) = 1.d0/(1000.d0*h2d)
          d1 = abs(y(2))
          d2 = abs(y(2) - pi/2.d0)
          d3 = abs(y(2) - pi)
@@ -180,7 +186,6 @@ module yorp_module
       real(kind=dkind) :: aux
       real(kind=dkind) :: rho, sma, diam, fact 
       real(kind=dkind) :: coe1, coe2
-      real(kind=dkind), parameter :: c_YORP = 0.7d0
       ! Take the variables, [omega] = 1/d, [gam] = rad
       omega = x(1)
       gam   = x(2)
@@ -207,11 +212,6 @@ module yorp_module
          vf(1) = 0.d0 
          vf(2) = 0.d0 
       endif
-!      ! If the diameter is small (i.e. D < 50 m) we put the limiting period to 100 h
-!      if(1.d0/(omega/d2h).gt.1.d2 .and. diam.le.50.d0)then
-!         vf(1) = 0.d0 
-!         vf(2) = 0.d0 
-!      endif
    end subroutine
 
    ! PURPOSE: read the files yorp_f.txt, yorp_g needed to compute the vector field, 
@@ -451,7 +451,6 @@ module yorp_module
       real(kind=dkind), parameter   :: B = 84.5d3*y2d
       real(kind=dkind), parameter   :: beta1  = 5.0d0/6.0d0
       real(kind=dkind), parameter   :: beta2  = 4.0d0/3.0d0
-      real(kind=dkind), parameter   :: c_reor = 0.9d0
       real(kind=dkind), parameter   :: omega0 = 1.d0/(5.d0*h2d)
       real(kind=dkind), parameter   :: D0 = 2.0d0
       real(kind=dkind)              :: t_reor
