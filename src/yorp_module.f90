@@ -485,26 +485,20 @@ module yorp_module
       real(kind=dkind), intent(out) :: omega_new
       ! end interface
       real(kind=dkind)              :: rand_num
-      real(kind=dkind)              :: rand_gauss(1)
-      real(kind=dkind), parameter   :: P_mean = 6.d0
-      real(kind=dkind), parameter   :: P_std  = 4.d0
+      real(kind=dkind)              :: rand_gauss(3)
       real(kind=dkind)              :: P
+      real(kind=dkind), parameter   :: P_peak = 10.d0
       ! Generate a new value of gamma
       call random_number(rand_num)
       gamma_new = acos(2.d0*rand_num - 1.d0)
-      ! Generate the rotation period. 
-      ! TODO: At this moment, P is distributed according to 
-      !       a Gaussian distribution with mean equal to 6 h
-      !       and a standard deviation of 4 h. Moreover, periods
-      !       smaller than 3 hours and larger than 24 hours are 
-      !       excluded. What to do to improve this?
+      ! Generate the rotation period. The Maxwellian disribution is obtained 
+      ! as a sum of three Gaussian distributions.
       P = 0.0
-      do while(P.lt.4.d0 .or. P.gt.24.d0)
-         ! Generate a number with standard Gaussian distribution
-         call gauss_random(1, rand_gauss)
-         ! Correct with mean and standard deviation 
-         P = rand_gauss(1)*P_std + P_mean
-      enddo
+      ! Generate three numbers with standard Gaussian distribution
+      call gauss_random(3, rand_gauss)
+      ! Transform to Maxwellian
+      P = P_peak*sqrt(rand_gauss(1)**2.d0 + rand_gauss(2)**2.d0 + rand_gauss(3)**2.d0)
+      ! Transform to rotation rate
       omega_new = 1.d0/(P*h2d)
    end subroutine
 

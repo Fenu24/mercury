@@ -3380,8 +3380,7 @@ c
             if(stoc_yorp_flag.eq.1)then
                ! Compute tau_yorp (in years) as a function of the size
                ! tau_yorp = 0.25 My * D(km)^(4/3)*3/4
-               tau_yorp  = 3.d0*0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)
-     %                     /4.d0*c_STOC
+               tau_yorp = 0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)*c_STOC
                ! Compute the time elapsed from the last event, in year
                elap_time = abs(time*d2y-last_stoc_event(j)) 
                ! Check if a time of tau_yorp has elapsed from the last
@@ -3736,8 +3735,7 @@ c
             if(stoc_yorp_flag.eq.1)then
                ! Compute tau_yorp (in years) as a function of the size
                ! tau_yorp = 0.25 My * D(km)^(4/3)*3/4
-               tau_yorp  = 3.d0*0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)
-     %                     /4.d0*c_STOC
+               tau_yorp = 0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)*c_STOC
                ! Compute the time elapsed from the last event, in year
                elap_time = abs(time*d2y-last_stoc_event(j)) 
                ! Check if a time of tau_yorp has elapsed from the last
@@ -4088,8 +4086,7 @@ c
             if(stoc_yorp_flag.eq.1)then
                ! Compute tau_yorp (in years) as a function of the size
                ! tau_yorp = 0.25 My * D(km)^(4/3)*3/4
-               tau_yorp  = 3.d0*0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)
-     %                     /4.d0*c_STOC
+               tau_yorp = 0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)*c_STOC
                ! Compute the time elapsed from the last event, in year
                elap_time = abs(time*d2y-last_stoc_event(j)) 
                ! Check if a time of tau_yorp has elapsed from the last
@@ -4524,7 +4521,7 @@ c------------------------------------------------------------------------------
             !    CHECK FOR COLLISION RE-ORIENTATION
             ! =========================================
             ! Check if collision reorientation is occurring for P > 1000h
-            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+            if(1.d0/y_yorp(j, 1)*d2h .ge. 1000.d0)then
                call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
      %                            reorient_flag)
                ! If a collisional reorientation is occurring, generate new
@@ -4564,8 +4561,7 @@ c------------------------------------------------------------------------------
             if(stoc_yorp_flag.eq.1)then
                ! Compute tau_yorp (in years) as a function of the size
                ! tau_yorp = 0.25 My * D(km)^(4/3)*3/4
-               tau_yorp  = 3.d0*0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)
-     %                     /4.d0*c_STOC
+               tau_yorp = 0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)*c_STOC
                ! Compute the time elapsed from the last event, in year
                elap_time = abs(time*d2y-last_stoc_event(j)) 
                ! Check if a time of tau_yorp has elapsed from the last
@@ -4869,8 +4865,7 @@ c  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
             if(stoc_yorp_flag.eq.1)then
                ! Compute tau_yorp (in years) as a function of the size
                ! tau_yorp = 0.25 My * D(km)^(4/3)*3/4
-               tau_yorp  = 3.d0*0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)
-     %                     /4.d0*c_STOC
+               tau_yorp = 0.25d6*(D_ast(j)/1000.d0)**(4.d0/3.d0)*c_STOC
                ! Compute the time elapsed from the last event, in year
                elap_time = abs(time*d2y-last_stoc_event(j)) 
                ! Check if a time of tau_yorp has elapsed from the last
