@@ -1,0 +1,40 @@
+&yorp_param
+      yorp_flag = 1,
+ stoc_yorp_flag = 0,
+      step_auto = 0,
+      step_user = 20.0,
+     enable_out = 1,
+         dt_out = 50.0,
+         c_YORP = 0.7d0,
+         c_REOR = 0.9d0,
+         c_STOC = 1.0d0,
+/
+
+
+! Input parameters for the spin-axis dynamics due to YORP effect. The meaning
+! of the parameters is the following
+! 
+!     yorp_flag : include the spin-axis evolution due to YORP effect. Note that
+!                 this works only if the mfo_usef routine is required, i.e. only
+!                 if also the Yarkovsky effect is added to the model
+!                     1 => include YORP
+!                .ne. 1 => not include YORP
+!
+!stoc_yorp_flag : include stochastic YORP effect.
+!                     1 =>     include stochastic YORP
+!                .ne. 1 => not include stochastic YORP
+!  
+!     step_auto : flag to choose an autmatic (constant) timestep for the spin-axis
+!                 integration. 
+!                     0 => timestep is specified by the user
+!                .ne. 0 => timestep is selected automatically. In this case,
+!                          each asteroid is assigned a timestep depending on 
+!                          the diameter, and then the minimum is adopted. 
+!                 NOTE: maximum timestep can be 50 years, and the minimum 1 year
+!
+!     step_user : timestep for the spin axis integration in years, defined by the user. 
+!                 Maximum timestep allowed is 50 years, while minimum timestep is 1 year.
+!
+!       dt_out  : timestep for printing output on a file. 
+!                 NOTE: if this is not a multiple of the timestep, a linear interpolation
+!                 between two successive integration points is used

@@ -1,0 +1,11 @@
+)O+_06 Small-body initial data  (WARNING: Do not delete this line!!)
+) Lines beginning with `)\` are ignored.
+)---------------------------------------------------------------------
+ style (Cartesian, Asteroidal, Cometary) = Asteroidal
+)--------------------------------------------d or D is not matter--0d0 is possible too--
+clo0    ep = 0.0
+2.2   0.004   4.7118 18.8275  344.8925  95.7888 0.0 0.0 0.0
+clo1 ep = 0.d0
+2.33   0.01   1.0   0.0   0.0   0.0   0.0   0.0 0.0
+clo2 ep = 0.d0
+3.5   0.01   1.0   0.0   0.0   0.0   0.0   0.0 0.0
