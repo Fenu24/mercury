@@ -2,12 +2,12 @@
       yorp_flag = 1,
  stoc_yorp_flag = 0,
       step_auto = 0,
-      step_user = 20.0,
+      step_user = 50.0,
      enable_out = 1,
          dt_out = 50.0,
          c_YORP = 0.7d0,
          c_REOR = 0.9d0,
-         c_STOC = 1.0d0,
+         c_STOC = 0.75d0,
 /
 
 
@@ -35,6 +35,19 @@
 !     step_user : timestep for the spin axis integration in years, defined by the user. 
 !                 Maximum timestep allowed is 50 years, while minimum timestep is 1 year.
 !
-!       dt_out  : timestep for printing output on a file. 
+!    enable_out : enable the output for the spin axis dynamics.
+!                     1 => enable 
+!                .ne. 1 => disable
+!
+!        dt_out : timestep for printing output on a file. 
 !                 NOTE: if this is not a multiple of the timestep, a linear interpolation
 !                 between two successive integration points is used
+!
+!        c_YORP : coefficient in the rescaling factor of Eq. (5), real number. 
+!                 Suggested value: 0.5 - 0.7
+!
+!        c_REOR : coefficient for uncertainties in collisional re-orientation of Eq. (6).
+!                 Suggested value: 0.9
+!
+!        c_STOC : coefficient for uncertainties in stochastic events, in Eq. (9). 
+!                 Suggested value: 0.75
