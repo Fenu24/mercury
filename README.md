@@ -59,7 +59,7 @@ To run simulations that include the Yarkovsky/YORP effect in the model, some add
      
    3. **yarkovsky.in**: this file contains physical and thermal parameters of the asteroids.
      This file is supposed to be contained in the folder where the mercury integrator is
-     run. Make sure that all the objects contained in the small.in file are also here.
+     running. Make sure that all the objects contained in the small.in file are also here.
      Here you have to provide, on each row:
          - the name of the asteroid
          - the density &rho; (kg/m^3)
