@@ -92,7 +92,7 @@ We suggest the user to run each simulation in a separate folder. To this purpose
             ln -s ../../bin/element6
             ln -s ../../bin/close6
 
-5. Create the basic file 
+5. Create the basic files 
    - big.in
    - small.in
    - param.in
