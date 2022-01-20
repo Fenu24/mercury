@@ -39,7 +39,7 @@ Before using the package for the first time, the code needs to be compiled. To f
 
 **NOTE 1.** For the compilation to work correclty, you need two hidden directories called *.mod* and *.obj*. Please be sure that these two folders are correctly contained on your local distribution.
 
-**NOTE 2.** The Everhart's RA15 (Radau) integration method may not work properly, depending on the compiler used. From the tests we performed, we experienced problems with the GNU gfortran compiler (Version 9.3.0), while it was working correctly with the INTEL ifort compiler (Version 13.1.1)
+**NOTE 2.** The Everhart's RA15 (Radau) integration method may not work properly, depending on the compiler used. From the tests we performed, we experienced problems with the GNU gfortran compiler (Version 9.3.0), while it was working correctly with the INTEL ifort compiler (Version 13.1.1).
 
 ## Files preparation
 
