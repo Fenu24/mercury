@@ -54,7 +54,7 @@ To run simulations that include the Yarkovsky/YORP effect in the model, some add
             selection
          - in case you want to specify the stepsize, write the stepsize in years
          - if you want to enable the output for the spin-axis dynamics
-         - the stepsize the the output    
+         - the stepsize for the output    
  
      
    3. **yarkovsky.in**: this file contains physical and thermal parameters of the asteroids.
