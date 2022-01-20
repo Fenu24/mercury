@@ -99,7 +99,7 @@ We suggest the user to run each simulation in a separate folder. To this purpose
    - files.in
    - message.in
     
-  needed to run the MERCURY integrator. Examples of these files can be found in the directory *dat/mercury*
+  needed to run the MERCURY integrator.
 
 7. Create the yarkovsky.in file
 
