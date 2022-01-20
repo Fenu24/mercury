@@ -5,7 +5,7 @@ This software is an augmented version of the MERCURY integrator, that was  origi
 
 More specifically, the Yarkovsky effect is added to the gravitational vector field, and the spin-axis evolution due to the YORP effect is integrated together with the orbital dynamics. Technical details of the equations and of the implementation can be found in the paper
 
-" ", M. Fenucci and B. Novaković, Serbian Astronomical Journal
+"Mercury and OrbFit packages for numerical integration of planetary systems: implementation of the Yarkovsky and YORP effects", M. Fenucci and B. Novaković
 
 If you publish results using this version of the integrator, please reference the package using the above paper. 
 
