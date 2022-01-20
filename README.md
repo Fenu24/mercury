@@ -124,5 +124,5 @@ We suggest the user to run each simulation in a separate folder. To this purpose
 ### Run the test simulation
 
 ## Refereces
-- *Mercury and OrbFit packages for numerical integration of planetary systems: implementations of the Yarkovsky and YORP effects*, M. Fenucci and B. Novaković, Serbian Astronomical Journal
+- *Mercury and OrbFit packages for numerical integration of planetary systems: implementations of the Yarkovsky and YORP effects*, M. Fenucci and B. Novaković
 
