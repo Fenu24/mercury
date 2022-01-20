@@ -7,7 +7,7 @@ More specifically, the Yarkovsky effect is added to the gravitational vector fie
 
 "Mercury and OrbFit packages for numerical integration of planetary systems: implementation of the Yarkovsky and YORP effects", M. Fenucci and B. Novaković
 
-If you publish results using this version of the integrator, please reference the package using the above paper. 
+If you publish results using this version of the integrator, please refer to the package using the above paper. 
 
 In this readme you can find instructions on how to use the additional routines provided in this version of the integrator. To prepare the initial conditions for planets and small objects, please refer to the original manual written by John E. Chambers. 
 
