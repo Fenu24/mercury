@@ -71,7 +71,7 @@ To run simulations that include the Yarkovsky/YORP effect in the model, some add
          - the absorption coefficient &alpha; (usually set to 1)
          - the emissivity &epsilon; (usually set to 1)
 
-**NOTE 1.** When writing real numbers, please make sure they are written with at least a decimal number, or by using the d0 FORTRAN notation.
+**NOTE 1.** When writing real numbers, please make sure they are written with at least a decimal digit, or by using the d0 FORTRAN notation.
 
 **NOTE 2.** To add the Yarkovsky effect to the model, make sure that the field *include user-defined force* in the original param.in input file for MERCURY is set to *yes*.
 
