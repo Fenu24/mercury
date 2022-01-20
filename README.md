@@ -46,7 +46,7 @@ Before using the package for the first time, the code needs to be compiled. To f
 To run simulations that include the Yarkovsky/YORP effect in the model, some additional input files are needed. 
    1. **yorp_f.txt**, **yorp_g.txt**: these are files containing a discretization of the mean torques shown in Fig. 1 of the reference paper. They are supposed to be placed in a subfolder called *input*. A copy of these files can be found in the *dat* folder of the distribution
    2. **yorp.in**: this is a file containing parameters for the integration of the spin-axis
-     dynamics. This file is also supposed to be contained in a subfolder called *input*.
+     dynamics. This file is also supposed to be contained in a subfolder called *input*. An example of this input file can be found in the *test* folder.
      Here you have to provide:
          - if you want to include the YORP effect in the model
          - if you want to use a stochastic YORP model (see reference paper)
@@ -55,7 +55,7 @@ To run simulations that include the Yarkovsky/YORP effect in the model, some add
          - in case you want to specify the stepsize, write the stepsize in years
          - if you want to enable the output for the spin-axis dynamics
          - the stepsize the the output    
- An example of this input file can be found in the *test* folder
+ 
      
    3. **yarkovsky.in**: this file contains physical and thermal parameters of the asteroids.
      This file is supposed to be contained in the folder where the mercury integrator is
