@@ -56,7 +56,7 @@ To run simulations that include the Yarkovsky/YORP effect in the model, some add
          - if you want to enable the output for the spin-axis dynamics
          - the stepsize the the output
          
-     An example of this input file can be found in the *test* folder
+An example of this input file can be found in the *test* folder
      
    3. **yarkovsky.in**: this file contains physical and thermal parameters of the asteroids.
      This file is supposed to be contained in the folder where the mercury integrator is
