@@ -140,7 +140,7 @@ the Yarkovsky and YORP effects in the model. To create the folder, move into the
       make
 
 A folder called *yorp_test* will be created, together with all the files needed for the
-simulation. To run the simulation, move into the *yorp_test* folder, and run mercury with
+simulation. To run the simulation, move into the *yorp_test* folder, and run MERCURY with
 
       ./mercury6_yorp
 
