@@ -1,15 +1,24 @@
 # Manual for the augmented MERCURY integrator
 
 
-This software is an augmented version of the MERCURY integrator, that was  originally developed by John E. Chambers. The new features included in this package are specifically designed for the propagation of small solar system objects, i.e. asteroids.
+This software is an augmented version of the MERCURY integrator, that was  originally
+developed by John E. Chambers. The new features included in this package are specifically
+designed for the propagation of small solar system objects, i.e. asteroids.
 
-More specifically, the Yarkovsky effect is added to the gravitational vector field, and the spin-axis evolution due to the YORP effect is integrated together with the orbital dynamics. Technical details of the equations and of the implementation can be found in the paper
+More specifically, the Yarkovsky effect is added to the gravitational vector field, and
+the spin-axis evolution due to the YORP effect is integrated together with the orbital
+dynamics. Technical details of the equations and of the implementation can be found in the
+paper
 
-"Mercury and OrbFit packages for numerical integration of planetary systems: implementation of the Yarkovsky and YORP effects", M. Fenucci and B. Novaković
+M. Fenucci and B. Novaković: 2022. *Mercury and OrbFit packages for numerical integration of planetary systems:
+implementation of the Yarkovsky and YORP effects*, Serbian Astronomical Journal
 
-If you publish results using this version of the integrator, please refer to the package using the above paper. 
+If you publish results using this version of the integrator, please refer to the package
+using the above paper. 
 
-In this readme you can find instructions on how to use the additional routines provided in this version of the integrator. To prepare the initial conditions for planets and small objects, please refer to the original manual written by John E. Chambers. 
+In this readme you can find instructions on how to use the additional routines provided in
+this version of the integrator. To prepare the initial conditions for planets and small
+objects, please refer to the original manual written by John E. Chambers. 
 
 
 ## Authors 
@@ -53,6 +62,7 @@ To run simulations that include the Yarkovsky/YORP effect in the model, some add
          - if you want to choose the stepsize or if you want to use the automatic
             selection
          - in case you want to specify the stepsize, write the stepsize in years
+         - the peak of the Maxwellian distribution for the period resetting
          - if you want to enable the output for the spin-axis dynamics
          - the stepsize for the output    
          - the value of the parameters c_YORP, c_REOR, and c_STOC
@@ -123,7 +133,32 @@ We suggest the user to run each simulation in a separate folder. To this purpose
 **Note.** You may want to run the program in background for long-term integrations.
    
 ### Run the test simulation
+The folder *integrations* contains a script that creates a test simulation that includes
+the Yarkovsky and YORP effects in the model. To create the folder, move into the folder
+*integrations* and execute
 
-## Refereces
-- *Mercury and OrbFit packages for numerical integration of planetary systems: implementations of the Yarkovsky and YORP effects*, M. Fenucci and B. Novaković
+      make
+
+A folder called *yorp_test* will be created, together with all the files needed for the
+simulation. To run the simulation, move into the *yorp_test* folder, and run mercury with
+
+   ./mercury6_yorp
+
+The simulation is set up for the integration of 3 asteroids over a timespan of 1 My, using
+the static YORP model. Once the simulation has completed, you can convert the output files
+by executing
+
+   ./element6
+
+## Known problems
+We list here the known problems that need to be fixed in following updates:
+1. A simulation that included the Yarkovsky and/or YORP effects that stopped, **can not**
+   be restarted from the dump files. It needs to be restarted from the beginning. 
+2. In the current version, the yarkovsky.in and yorp.in files need to be placed in
+   specific folders, as explained above. To make the use of the code more flexible, the
+   name and location of these files should be given in input in the files.in list.
+
+## References
+- M. Fenucci and B. Novaković: 2022. *Mercury and OrbFit packages for numerical integration of planetary systems:
+implementation of the Yarkovsky and YORP effects*, Serbian Astronomical Journal
 

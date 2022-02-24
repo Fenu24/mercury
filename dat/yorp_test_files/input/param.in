@@ -5,7 +5,7 @@
 )---------------------------------------------------------------------
  algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = mvs
  start time (days)=   0.0
- stop time (days) =   326525000.0
+ stop time (days) =   365.25d6
  output interval (days) = 3652.25
  timestep (days) = 4.1d0
  accuracy parameter=1.d-12
