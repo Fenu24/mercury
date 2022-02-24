@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Create the folder
+rm -r yorp_test >> /dev/null
 mkdir yorp_test
 # Move into the folder
 cd yorp_test
