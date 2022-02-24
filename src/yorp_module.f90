@@ -76,6 +76,8 @@ module yorp_module
    real(kind=dkind)   :: last_stoc_event(nmax)
    ! For YORP model
    real(kind=dkind)   :: c_YORP, c_REOR, c_STOC
+   ! Peak of the Maxwellian distribution
+   real(kind=dkind)   :: P_peak
    ! Variables for the integration:
    !     t_yorp: current time
    !     h_yorp: time step
@@ -102,7 +104,7 @@ module yorp_module
    public :: dadt_MY, rho_ast, K_ast, C_ast, D_ast, gamma_ast, omega_ast, P_ast, sma_ast, &
           &  alpha_ast, epsi_ast, yorp_flag, dt_out, time_out, stoc_yorp_flag, last_stoc_event, &
           &  K_fact, enable_out, c_YORP, c_REOR, c_STOC
-   public :: t_yorp, h_yorp, y_yorp, id_copy, tstart_copy, coeff_ast
+   public :: t_yorp, h_yorp, y_yorp, id_copy, tstart_copy, coeff_ast, P_peak
    public :: h2s, s2h, d2s, s2d, y2d, d2y, y2s, s2y, yr2my, s2my, my2s, h2d, d2h, deg2rad, rad2deg
    contains
 
@@ -135,6 +137,19 @@ module yorp_module
       call yorp_vf(y + h*f2/2.d0, f3, rpar)
       call yorp_vf(y + h*f3,      f4, rpar)
       ytph = y + h*(f1 + 2.d0*f2 + 2.d0*f3 + f4)/6.d0
+      if(any(ytph>1000.d0))then
+         ytph(2) = y(2)
+         ytph(1) = 1.d0/(1000.d0*h2d)
+      elseif(any(isnan(ytph)))then
+         write(*,*) "NAN!!!       "
+         write(*,*) " y           ", y
+         write(*,*) " h           ", h
+         write(*,*) " ytph        ", ytph
+         write(*,*) " f1 f2 f3 f4 ", f1,f2,f3,f4
+         write(*,*) " rpar        ", rpar 
+         write(*,*) "NAN!!!"
+         read(*,*)
+      endif
       ! NOTE: this is done to avoid having 1.d-300 in \gamma
       if(abs(ytph(2)).lt.1.d-10)then
          ytph(2) = 0.d0
@@ -487,7 +502,6 @@ module yorp_module
       real(kind=dkind)              :: rand_num
       real(kind=dkind)              :: rand_gauss(3)
       real(kind=dkind)              :: P
-      real(kind=dkind), parameter   :: P_peak = 10.d0
       ! Generate a new value of gamma
       call random_number(rand_num)
       gamma_new = acos(2.d0*rand_num - 1.d0)
@@ -661,6 +675,25 @@ module yorp_module
       call Fnu_eval(Rpd, Theta, F_omega_rot)
       ! Compute the Yarkovsky acceleration
       yarko_d = -8.d0*alpha*phi*F_omega_rot*cos(gam_rad)/(9.d0*omega_rev)
+!      if(isnan(yarko_d))then
+!         write(*,*) "yarko_d is nan "
+!         write(*,*) " a0            ", a0
+!         write(*,*) " alpha         ", alpha 
+!         write(*,*) " phi           ", phi 
+!         write(*,*) " mast          ", mast
+!         write(*,*)
+!         write(*,*) " F_omega_rot   ", F_omega_rot
+!         write(*,*) " Rpd, Theta    ", Rpd, Theta
+!         write(*,*) " omega_rot,P   ", omega_rot, rotPer 
+!         write(*,*)
+!         write(*,*) " gam_rad       ", gam_rad
+!         write(*,*) " omega_rev     ", omega_rev
+!         write(*,*)
+!         write(*,*) "coeff ast      ", coeff_ast(9, 1:2)
+!         write(*,*) "coeff ast      ", coeff_ast(10, 1:2)
+!         write(*,*) "yarko_d is nan "
+!         read(*,*)
+!      endif
    end subroutine yarko_diurnal_vokrouhlicky
 
    ! PURPOSE: compute the value of the function F_\nu used in Vokrouhlicky 1999

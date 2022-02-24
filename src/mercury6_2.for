@@ -4486,6 +4486,7 @@ c
 c Direct terms
       do i = 2, nbig
         do j = i + 1, nbod
+!        do j = nbig + 1, nbod
           dx = x(1,j) - x(1,i)
           dy = x(2,j) - x(2,i)
           dz = x(3,j) - x(3,i)
@@ -4505,10 +4506,18 @@ c Direct terms
 c
 c Indirect terms (add these on last to reduce roundoff error)
       do i = 2, nbod
-        tmp1 = m(1) * r3(i)
-        a(1,i) = a(1,i)  +  sx  -  tmp1 * x(1,i)
-        a(2,i) = a(2,i)  +  sy  -  tmp1 * x(2,i)
-        a(3,i) = a(3,i)  +  sz  -  tmp1 * x(3,i)
+!        if(i.le.nbig)then
+!           tmp1 = (m(1)+m(i)) * r3(i)
+!!           write(*,*) "a, i", a(1:3,i), i
+!           a(1,i) = a(1,i)   -  tmp1 * x(1,i)
+!           a(2,i) = a(2,i)   -  tmp1 * x(2,i)
+!           a(3,i) = a(3,i)   -  tmp1 * x(3,i)
+!        else
+           tmp1 = m(1) * r3(i)
+           a(1,i) = a(1,i)  +  sx  -  tmp1 * x(1,i)
+           a(2,i) = a(2,i)  +  sy  -  tmp1 * x(2,i)
+           a(3,i) = a(3,i)  +  sz  -  tmp1 * x(3,i)
+!        endif
       end do
 c
 c------------------------------------------------------------------------------

@@ -266,7 +266,8 @@ c------------------------------------------------------------------------------
          real*8  step_user
          real*8  minD
          namelist /yorp_param/ yorp_flag, stoc_yorp_flag, step_auto,
-     %      step_user, enable_out, dt_out, c_YORP, c_REOR, c_STOC
+     %      step_user, enable_out, dt_out, P_peak, c_YORP,
+     %      c_REOR, c_STOC
          nfound = 0
          nast = nbod - nbig 
          ! Open the input file
@@ -326,6 +327,7 @@ c------------------------------------------------------------------------------
             write(*,*) "Error: not enough asteroid in input! "
             write(*,*) "Number of asteroid: ", nast
             write(*,*) "Number found:       ", nfound
+            write(*,*) "Number of objects:  ", nbod
             write(*,*) "Stoppping program"
             stop
          endif
@@ -438,7 +440,7 @@ c Local
       !**************************************
       ! Yarkovsky is implemented as a drift along the heliocentric 
       ! velocity, as done in orbit9
-      real*8 r, r2, v2, xv
+      real*8 r, r2, v2, xdotv
       real*8 squarg, factor
       real*8 angmom(3), norm_angmom2
       real*8 dadt, trans(3), norm_trans, trans_vers(3)
@@ -462,7 +464,7 @@ c
          ! Convert the drift in AU/y
          dadt = dadt_My(j)/(365.25d0*10**6.d0)
          ! Compute dot product between the position and the velocity
-         xv = dot_product(x(1:3, j), v(1:3, j))
+         xdotv = dot_product(x(1:3, j), v(1:3, j))
          ! Compute the heliocentric distance and norm of the velocity
          r2 = dot_product(x(1:3, j), x(1:3, j))
          v2 = dot_product(v(1:3, j), v(1:3, j))
@@ -484,7 +486,7 @@ c
          yark_acc = 0.5d0*factor/r2
          ! Compute the transversal direction, defined by the vector
          ! v - x (x \cdot v)/|x|^2
-         trans(1:3) = v(1:3, j) - x(1:3, j)*xv/r2
+         trans(1:3) = v(1:3, j) - x(1:3, j)*xdotv/r2
          norm_trans = norm2(trans)
          trans_vers(1:3) = trans(1:3)/norm_trans
          ! Add the Yarkovsky acceleration in the output variable
@@ -3340,7 +3342,7 @@ c
             !    CHECK FOR COLLISION RE-ORIENTATION
             ! =========================================
             ! Check if collision reorientation is occurring for P > 1000h
-            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+            if(1.d0/y_yorp(j, 1)*d2h .ge. 1000.d0)then
                call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
      %                            reorient_flag)
                ! If a collisional reorientation is occurring, generate new
@@ -3440,9 +3442,13 @@ c
             Pnew   = 1.d0/y_yorp(j, 1)*d2h
             gamnew = y_yorp(j, 2)*rad2deg
             ! Update Yarkovsky drift
-            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+            if(energy.lt.0.d0)then
+               call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
      %                      0.5d0*D_ast(j), sma, gamnew, 
      %                      Pnew, alpha, epsi, dadt)
+            else
+               dadt= 0.d0
+            endif
             dadt_My(j) = dadt
          enddo
          ! If output was performed, increase the variable keeping track
@@ -3695,7 +3701,7 @@ c
             !    CHECK FOR COLLISION RE-ORIENTATION
             ! =========================================
             ! Check if collision reorientation is occurring for P > 1000h
-            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+            if(1.d0/y_yorp(j, 1)*d2h .ge. 1000.d0)then
                call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
      %                            reorient_flag)
                ! If a collisional reorientation is occurring, generate new
@@ -3795,9 +3801,13 @@ c
             Pnew   = 1.d0/y_yorp(j, 1)*d2h
             gamnew = y_yorp(j, 2)*rad2deg
             ! Update Yarkovsky drift
-            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+            if(energy.lt.0.d0)then
+               call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
      %                      0.5d0*D_ast(j), sma, gamnew, 
      %                      Pnew, alpha, epsi, dadt)
+            else
+               dadt= 0.d0
+            endif
             dadt_My(j) = dadt
          enddo
          ! If output was performed, increase the variable keeping track
@@ -4046,7 +4056,7 @@ c
             !    CHECK FOR COLLISION RE-ORIENTATION
             ! =========================================
             ! Check if collision reorientation is occurring for P > 1000h
-            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+            if(1.d0/y_yorp(j, 1)*d2h .ge. 1000.d0)then
                call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
      %                            reorient_flag)
                ! If a collisional reorientation is occurring, generate new
@@ -4146,9 +4156,13 @@ c
             Pnew   = 1.d0/y_yorp(j, 1)*d2h
             gamnew = y_yorp(j, 2)*rad2deg
             ! Update Yarkovsky drift
-            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+            if(energy.lt.0.d0)then
+               call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
      %                      0.5d0*D_ast(j), sma, gamnew, 
      %                      Pnew, alpha, epsi, dadt)
+            else
+               dadt= 0.d0
+            endif
             dadt_My(j) = dadt
          enddo
          ! If output was performed, increase the variable keeping track
@@ -4621,9 +4635,13 @@ c------------------------------------------------------------------------------
             Pnew   = 1.d0/y_yorp(j, 1)*d2h
             gamnew = y_yorp(j, 2)*rad2deg
             ! Update Yarkovsky drift
-            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+            if(energy.lt.0.d0)then
+               call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
      %                      0.5d0*D_ast(j), sma, gamnew, 
      %                      Pnew, alpha, epsi, dadt)
+            else
+               dadt= 0.d0
+            endif
             dadt_My(j) = dadt
          enddo
          ! If output was performed, increase the variable keeping track
@@ -4825,7 +4843,7 @@ c  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
             !    CHECK FOR COLLISION RE-ORIENTATION
             ! =========================================
             ! Check if collision reorientation is occurring for P > 1000h
-            if(1.d0/y_yorp(j, 1)*d2h .gt. 1000.d0)then
+            if(1.d0/y_yorp(j, 1)*d2h .ge. 1000.d0)then
                call reor_probability(y_yorp(j,1), D_ast(j), h_yorp, 
      %                            reorient_flag)
                ! If a collisional reorientation is occurring, generate new
@@ -4925,9 +4943,13 @@ c  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
             Pnew   = 1.d0/y_yorp(j, 1)*d2h
             gamnew = y_yorp(j, 2)*rad2deg
             ! Update Yarkovsky drift
-            call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
+            if(energy.lt.0.d0)then
+               call dadt_comp(rho_ast(j), K_ast(j), C_ast(j), 
      %                      0.5d0*D_ast(j), sma, gamnew, 
      %                      Pnew, alpha, epsi, dadt)
+            else
+               dadt= 0.d0
+            endif
             dadt_My(j) = dadt
          enddo
          ! If output was performed, increase the variable keeping track
