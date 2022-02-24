@@ -142,13 +142,13 @@ the Yarkovsky and YORP effects in the model. To create the folder, move into the
 A folder called *yorp_test* will be created, together with all the files needed for the
 simulation. To run the simulation, move into the *yorp_test* folder, and run mercury with
 
-   ./mercury6_yorp
+      ./mercury6_yorp
 
 The simulation is set up for the integration of 3 asteroids over a timespan of 1 My, using
 the static YORP model. Once the simulation has completed, you can convert the output files
 by executing
 
-   ./element6
+      ./element6
 
 ## Known problems
 We list here the known problems that need to be fixed in following updates:
