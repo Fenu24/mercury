@@ -329,12 +329,12 @@ module yorp_module
       t1 = t2 - step - t0
       ! First of all, compute the output value by linear interpolation between 
       ! the timestep at time t1 and the timestep at time t2
-      t_aux = (t_out-t1*d2y)/(step*d2y)
+      t_aux = (t_out-t1)/(step)
       y_out(1:2) = y1(1:2)*(1.d0-t_aux) + y2(1:2)*t_aux
       ! Open the output file
       open(unit=127, file=astname(1:len_trim(astname))//'.yorp',status='old', access='append')
       ! Write period in h, and gamma in deg
-      write(127,1001) t_out, (1.d0/y_out(1))*d2h, y_out(2)*rad2deg, dadt
+      write(127,1001) t_out*d2y, (1.d0/y_out(1))*d2h, y_out(2)*rad2deg, dadt
       close(127)
  1001 format(4(e12.6,1x))
    end subroutine

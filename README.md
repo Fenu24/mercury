@@ -154,10 +154,7 @@ by executing
 We list here the known problems that need to be fixed in following updates:
 1. A simulation that included the Yarkovsky and/or YORP effects that stopped, **can not**
    be restarted from the dump files. It needs to be restarted from the beginning
-2. There is a problem with the time variable when using the combined Yarkovsky/YORP
-   effects. For it to work properly, the initial time of integration in param.in should be
-   set to 0.0
-3. In the current version, the yarkovsky.in and yorp.in files need to be placed in
+2. In the current version, the yarkovsky.in and yorp.in files need to be placed in
    specific folders, as explained above. To make the use of the code more flexible, the
    name and location of these files should be given in input in the files.in list
 

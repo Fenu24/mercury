@@ -134,6 +134,8 @@ c
       external mco_dh2h,mco_h2dh
       external mco_b2h,mco_h2b,mco_h2mvs,mco_mvs2h,mco_iden
 
+      real*8 pos(3), vel(3), energy, sma
+
 c
       data opt/0,1,1,2,0,1,0,0/
 c
@@ -147,6 +149,23 @@ c Get initial conditions and integration parameters
       if(opt(8).eq.1)then
          id_copy     = id
          tstart_copy = tstart
+         ! ===========================================
+         ! COMPUTE THE SEMIMAJOR AXIS OF THE ORBITS 
+         ! ===========================================
+         do j=nbig+1, nbod
+            pos(1:3) = xh(1:3, j)
+            vel(1:3) = vh(1:3, j)
+            energy   = 0.5d0*norm2(vel)**2 - m(1)/norm2(pos)
+            sma      = -m(1)/(2.d0*energy)
+            ! Update also the global variable with the new semimajor axis
+            sma_ast(j) = sma
+            if(sma_ast(j).lt.0.d0)then
+               write(*,*) "Error!! "
+               write(*,*) "Negative semimajor axis of asteroid ", j-nbig
+               write(*,*) "Stopping program"
+               stop
+            endif
+         enddo
          call yarko_in(id, nbod, nbig, tstart)
       endif
 c
@@ -375,6 +394,8 @@ c------------------------------------------------------------------------------
             ! Set the initial time 
             t_yorp   = tstart
             time_out = tstart
+            ! Set the output delta in days
+            dt_out = dt_out*y2d
             ! Set the initial (\omega, \gamma) and
             ! create the output file and write the initial condition 
             do j=nbig+1, nbod
@@ -3410,16 +3431,16 @@ c
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
-     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+            if(time_out.le.t_yorp .and.
+     %         time_out.ge.(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
                ! by linear interpolation between the timestep at time t
                ! and the timestep at time t+h
                call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
-     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
-     %          dadt_My(j))
+     %          tstart_copy, time_out-tstart_copy, y_yorp(j,1:2), 
+     %          y_yorpnew(1:2), dadt_My(j))
                if(.not.out_flag)then
                   out_flag = .true.
                endif
@@ -3769,16 +3790,16 @@ c
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
-     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+            if(time_out.le.t_yorp .and.
+     %         time_out.ge.(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
                ! by linear interpolation between the timestep at time t
                ! and the timestep at time t+h
                call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
-     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
-     %          dadt_My(j))
+     %          tstart_copy, time_out-tstart_copy, y_yorp(j,1:2), 
+     %          y_yorpnew(1:2), dadt_My(j))
                if(.not.out_flag)then
                   out_flag = .true.
                endif
@@ -4124,16 +4145,16 @@ c
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
-     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+            if(time_out.le.t_yorp .and.
+     %         time_out.ge.(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
                ! by linear interpolation between the timestep at time t
                ! and the timestep at time t+h
                call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
-     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
-     %          dadt_My(j))
+     %          tstart_copy, time_out-tstart_copy, y_yorp(j,1:2), 
+     %          y_yorpnew(1:2), dadt_My(j))
                if(.not.out_flag)then
                   out_flag = .true.
                endif
@@ -4603,16 +4624,16 @@ c------------------------------------------------------------------------------
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
-     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+            if(time_out.le.t_yorp .and.
+     %         time_out.ge.(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
                ! by linear interpolation between the timestep at time t
                ! and the timestep at time t+h
                call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
-     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
-     %          dadt_My(j))
+     %          tstart_copy, time_out-tstart_copy, y_yorp(j,1:2), 
+     %          y_yorpnew(1:2), dadt_My(j))
                if(.not.out_flag)then
                   out_flag = .true.
                endif
@@ -4911,16 +4932,16 @@ c  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.(t_yorp-tstart_copy)*d2y .and.
-     %         time_out.ge.(t_yorp-h_yorp-tstart_copy)*d2y .and.
+            if(time_out.le.t_yorp .and.
+     %         time_out.ge.(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
                ! by linear interpolation between the timestep at time t
                ! and the timestep at time t+h
                call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
-     %          tstart_copy, time_out, y_yorp(j,1:2), y_yorpnew(1:2),
-     %          dadt_My(j))
+     %          tstart_copy, time_out-tstart_copy, y_yorp(j,1:2), 
+     %          y_yorpnew(1:2), dadt_My(j))
                if(.not.out_flag)then
                   out_flag = .true.
                endif
@@ -6992,7 +7013,7 @@ c If required, read Cartesian coordinates, velocities and spins of the bodies
           n = n * DR
           temp = m(nbod)  +  m(1)
 
-          sma_ast(nbod) = a
+!          sma_ast(nbod) = a
 c
 c Alternatively, read Cometary or asteroidal elements
           if (informat.eq.3) then
