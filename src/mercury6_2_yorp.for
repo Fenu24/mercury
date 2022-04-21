@@ -467,6 +467,7 @@ c Local
       real*8 dadt, trans(3), norm_trans, trans_vers(3)
       real*8 yark_acc
       real*8 gmsy
+      real*8 aaa
       !**************************************
 c
       integer j
@@ -482,7 +483,7 @@ c
       gmsy=m(1) ! here units are AU, d
       ! Do loop only on the massless bodies
       do j = nbig+1, nbod
-         ! Convert the drift in AU/y
+         ! Convert the drift in AU/d
          dadt = dadt_My(j)/(365.25d0*10**6.d0)
          ! Compute dot product between the position and the velocity
          xdotv = dot_product(x(1:3, j), v(1:3, j))
@@ -501,10 +502,13 @@ c
          if(squarg .lt. 0.d0)then
             squarg = 0.d0
          endif
-         ! Compute the augmentation factor
-         factor = norm_angmom2*sqrt(squarg)/gmsy
-         ! Compute the intensity of the Yarkovsky drift
-         yark_acc = 0.5d0*factor/r2
+!         ! Compute the augmentation factor
+!         factor = norm_angmom2*sqrt(squarg)/gmsy
+!         ! Compute the intensity of the Yarkovsky drift
+!         yark_acc = 0.5d0*factor/r2
+
+         aaa = gmsy/squarg
+         yark_acc = 0.5d0*gmsy*r/sqrt(norm_angmom2)/aaa**2
          ! Compute the transversal direction, defined by the vector
          ! v - x (x \cdot v)/|x|^2
          trans(1:3) = v(1:3, j) - x(1:3, j)*xdotv/r2
