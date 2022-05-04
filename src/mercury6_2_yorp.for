@@ -502,14 +502,16 @@ c
          if(squarg .lt. 0.d0)then
             squarg = 0.d0
          endif
-!         ! Compute the augmentation factor
-!         factor = norm_angmom2*sqrt(squarg)/gmsy
-!         ! Compute the intensity of the Yarkovsky drift
-!         yark_acc = 0.5d0*factor/r2
-
+         ! Compute the augmentation factor
+         !factor = norm_angmom2*sqrt(squarg)/gmsy
+         ! Compute the intensity of the Yarkovsky drift
+         !yark_acc = 0.5d0*factor/r2
+         ! Compute the semimajor axis 
          aaa = gmsy/squarg
+         ! Compute the intensity of the Yarvkosky acceleration of Eq.
+         ! (3) (rewritten in terms of r and angular momentum)
          yark_acc = 0.5d0*gmsy*r/sqrt(norm_angmom2)/aaa**2
-         ! Compute the transversal direction, defined by the vector
+         ! Compute the tangential direction, defined by the vector
          ! v - x (x \cdot v)/|x|^2
          trans(1:3) = v(1:3, j) - x(1:3, j)*xdotv/r2
          norm_trans = norm2(trans)

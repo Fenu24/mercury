@@ -37,7 +37,7 @@ $(BIN)/mercury6_yorp:	$(FDEPENDS) $(SRC)/mercury6_2_yorp.for
 	$(FORTRAN) $(FFLAGS) -c $< -o $@
 
 maketest:
-	cd integrations && make & cd ..
+	cd integrations && make 
 
 # --- Remove executable files
 clean:
