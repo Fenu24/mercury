@@ -3398,7 +3398,7 @@ c
                ! \gamma is unchanged, while \omega is computed anew
                ! Generate a random ratio for the mass shed
                call random_ratio(q_fact)
-               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               omega_new = sqrt(abs(y_yorp(j,1)**2.d0 - K_fact*q_fact))
                y_yorp(j, 1) = omega_new
                ! Choose new f and g
                call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
@@ -3757,7 +3757,7 @@ c
                ! \gamma is unchanged, while \omega is computed anew
                ! Generate a random ratio for the mass shed
                call random_ratio(q_fact)
-               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               omega_new = sqrt(abs(y_yorp(j,1)**2.d0 - K_fact*q_fact))
                y_yorp(j, 1) = omega_new
                ! Choose new f and g
                call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
@@ -4112,7 +4112,7 @@ c
                ! \gamma is unchanged, while \omega is computed anew
                ! Generate a random ratio for the mass shed
                call random_ratio(q_fact)
-               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               omega_new = sqrt(abs(y_yorp(j,1)**2.d0 - K_fact*q_fact))
                y_yorp(j, 1) = omega_new
                ! Choose new f and g
                call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
@@ -4591,7 +4591,7 @@ c------------------------------------------------------------------------------
                ! \gamma is unchanged, while \omega is computed anew
                ! Generate a random ratio for the mass shed
                call random_ratio(q_fact)
-               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               omega_new = sqrt(abs(y_yorp(j,1)**2.d0 - K_fact*q_fact))
                y_yorp(j, 1) = omega_new
                ! Choose new f and g
                call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))
@@ -4899,7 +4899,7 @@ c  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
                ! \gamma is unchanged, while \omega is computed anew
                ! Generate a random ratio for the mass shed
                call random_ratio(q_fact)
-               omega_new = sqrt(abs(y_yorp(j,2)**2.d0 - K_fact*q_fact))
+               omega_new = sqrt(abs(y_yorp(j,1)**2.d0 - K_fact*q_fact))
                y_yorp(j, 1) = omega_new
                ! Choose new f and g
                call shape_gen(K_ast(j), coeff_ast(j,1), coeff_ast(j,2))

@@ -114,8 +114,8 @@ module yorp_module
 
    ! PURPOSE: integration step using an explicit Runge-Kutta integrator of order 4 (RK4)
    ! INPUT
-   !  - y    : the current state vector y = (\omega, \gamma)
-   !  - h    : the timestep
+   !  - y    : the current state vector y = (\omega (1/d), \gamma (rad)) 
+   !  - h    : the timestep (days)
    !  - rpar : parameters for the YORP vector field. 
    !              rpar(1) = rho
    !              rpar(2) = sma
