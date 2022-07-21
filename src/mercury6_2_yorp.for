@@ -166,7 +166,7 @@ c Get initial conditions and integration parameters
                stop
             endif
          enddo
-         call yarko_in(id, nbod, nbig, tstart)
+         call yarko_in(id, nbod, nbig, tstart, tstop)
       endif
 c
 c If this is a new integration, integrate all the objects to a common epoch.
@@ -265,13 +265,14 @@ c Note that the sorting of the objects in yarkovsky.in is not relevant.
 c
 c------------------------------------------------------------------------------
 
-      subroutine yarko_in(id, nbod, nbig, tstart)
+      subroutine yarko_in(id, nbod, nbig, tstart, tstop)
          use yorp_module
          implicit none
          include'mercury.inc'
          character*25, intent(in)  :: id(NMAX)
          integer,      intent(in)  :: nbod, nbig
          real*8,       intent(in)  :: tstart
+         real*8,       intent(in)  :: tstop
          ! end interface
          integer j, k
          integer nfound, nast
@@ -384,6 +385,11 @@ c------------------------------------------------------------------------------
                ! NOTE: the unit for the time in mercury is days
                h_yorp = step_user*y2d
             endif
+            ! If the integration is backwards, use a negative step for 
+            ! the integration of the YORP effect
+            if(tstop.lt.tstart)then
+               h_yorp = -h_yorp
+            endif
             ! =========================================
             ! Set initial conditions for YORP evolution
             ! =========================================
@@ -396,6 +402,9 @@ c------------------------------------------------------------------------------
             time_out = tstart
             ! Set the output delta in days
             dt_out = dt_out*y2d
+            if(tstop.lt.tstart)then
+               dt_out = -dt_out
+            endif
             ! Set the initial (\omega, \gamma) and
             ! create the output file and write the initial condition 
             do j=nbig+1, nbod
@@ -3359,7 +3368,7 @@ c
      %       .and.
      %   yorp_flag .eq. 1
      %       .and.
-     %   abs(time-t_yorp) .gt. h_yorp)then
+     %   abs(time-t_yorp) .gt. abs(h_yorp))then
          ! Update the time first
          t_yorp = t_yorp + h_yorp
          ! If we have to make a step, update the states of (\omega,
@@ -3437,8 +3446,8 @@ c
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.t_yorp .and.
-     %         time_out.ge.(t_yorp-h_yorp) .and.
+            if(abs(time_out).le.abs(t_yorp) .and.
+     %         abs(time_out).ge.abs(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
@@ -3718,7 +3727,7 @@ c
      %       .and.
      %   yorp_flag .eq. 1
      %       .and.
-     %   abs(time-t_yorp) .gt. h_yorp)then
+     %   abs(time-t_yorp) .gt. abs(h_yorp))then
          ! Update the time first
          t_yorp = t_yorp + h_yorp
          ! If we have to make a step, update the states of (\omega,
@@ -3796,8 +3805,8 @@ c
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.t_yorp .and.
-     %         time_out.ge.(t_yorp-h_yorp) .and.
+            if(abs(time_out).le.abs(t_yorp) .and.
+     %         abs(time_out).ge.abs(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
@@ -4073,7 +4082,7 @@ c
      %       .and.
      %   yorp_flag .eq. 1
      %       .and.
-     %   abs(time-t_yorp) .gt. h_yorp)then
+     %   abs(time-t_yorp) .gt. abs(h_yorp))then
          ! Update the time first
          t_yorp = t_yorp + h_yorp
          ! If we have to make a step, update the states of (\omega,
@@ -4151,8 +4160,8 @@ c
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.t_yorp .and.
-     %         time_out.ge.(t_yorp-h_yorp) .and.
+            if(abs(time_out).le.abs(t_yorp) .and.
+     %         abs(time_out).ge.abs(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
@@ -4552,7 +4561,7 @@ c------------------------------------------------------------------------------
      %       .and.
      %   yorp_flag .eq. 1
      %       .and.
-     %   abs(time-t_yorp) .gt. h_yorp)then
+     %   abs(time-t_yorp) .gt. abs(h_yorp))then
          ! Update the time first
          t_yorp = t_yorp + h_yorp
          ! If we have to make a step, update the states of (\omega,
@@ -4630,8 +4639,8 @@ c------------------------------------------------------------------------------
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.t_yorp .and.
-     %         time_out.ge.(t_yorp-h_yorp) .and.
+            if(abs(time_out).le.abs(t_yorp) .and.
+     %         abs(time_out).ge.abs(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
@@ -4639,7 +4648,7 @@ c------------------------------------------------------------------------------
                ! and the timestep at time t+h
                call yorp_output(id_copy(j), t_yorp-tstart_copy, h_yorp,
      %          tstart_copy, time_out-tstart_copy, y_yorp(j,1:2), 
-     %          y_yorpnew(1:2), dadt_My(j))
+     %          y_yorpnew(1:2), dadt_my(j))
                if(.not.out_flag)then
                   out_flag = .true.
                endif
@@ -4860,7 +4869,7 @@ c  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
      %       .and.
      %   yorp_flag .eq. 1
      %       .and.
-     %   abs(time-t_yorp) .gt. h_yorp)then
+     %   abs(time-t_yorp) .gt. abs(h_yorp))then
          ! Update the time first
          t_yorp = t_yorp + h_yorp
          ! If we have to make a step, update the states of (\omega,
@@ -4938,8 +4947,8 @@ c  VC: 1/2,  1/3,  1/4,  1/5,  1/6,  1/7,  1/8
             ! ===========================================
             !        CHECK FOR REQUIRED OUTPUT           
             ! ===========================================
-            if(time_out.le.t_yorp .and.
-     %         time_out.ge.(t_yorp-h_yorp) .and.
+            if(abs(time_out).le.abs(t_yorp) .and.
+     %         abs(time_out).ge.abs(t_yorp-h_yorp) .and.
      %         enable_out.eq.1)then
                ! If that is the case, write the current integration
                ! in the file. The output value is computed
