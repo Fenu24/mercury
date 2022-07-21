@@ -18,7 +18,7 @@ using the above paper.
 
 In this readme you can find instructions on how to use the additional routines provided in
 this version of the integrator. To prepare the initial conditions for planets and small
-objects, please refer to the original manual written by John E. Chambers. 
+objects, please refer to the original manual written by John E. Chambers contained in the *doc* directory.
 
 
 ## Authors 
@@ -28,13 +28,13 @@ objects, please refer to the original manual written by John E. Chambers.
 
 ## New driver and compilation
 
-The modified version of the MERCURY integrator contains a new driver to perform integrations called
+The modified version of the MERCURY integrator contains a new driver to perform integrations, called
 
  >  mercury6_2_yorp.for
 
-This is the integration program, and it can be used to propagate numerically the dynamics of small solar system objects under the combined influence of the Yarkovsky/YORP effects. This program produces the same output files produced by the standard version of the MERCURY integrator, and additional files containing the spin-axis dynamics of the small bodies on request.
+This is the integration program, and it can be used to numerically propagate the dynamics of small Solar System objects under the combined influence of the Yarkovsky/YORP effects. This program produces the same output files produced by the standard version of the MERCURY integrator, and additional files containing the spin-axis dynamics of the small bodies on request.
 
-Before using the package for the first time, the code needs to be compiled. To facilitate the user, the distribution comes with a configuration script and a Makefile that automatically do the job. To compile the source code, please follow these steps
+Before using the package for the first time, the code needs to be compiled. To facilitate the user, the distribution comes with a configuration script and a Makefile that automatically does the job. To compile the source code, please follow these steps
 1. Choose the compiler and the compilation options by running the config.sh script. By running the script without further options, you will receive an help message. The script permits to choose between two different compiler: GNU gfortran, and Intel ifort. An additional option defines the compilation flags, and the final user can select the optimization flags "-O". For instance, if you want to use the GNU gfortran compiler, you can run the script as
            
            ./config.sh -O gfortran
@@ -46,16 +46,16 @@ Before using the package for the first time, the code needs to be compiled. To f
    and the executable binary files will be placed in the *bin* directory.
 
 
-**NOTE 1.** For the compilation to work correclty, you need two hidden directories called *.mod* and *.obj*. Please be sure that these two folders are correctly contained on your local distribution.
+**NOTE 1.** For the compilation to work correclty, you need two hidden directories called *.mod* and *.obj*. Please be sure that these two directories are correctly contained on your local distribution.
 
-**NOTE 2.** The Everhart's RA15 (Radau) integration method may not work properly, depending on the compiler used. From the tests we performed, we experienced problems with the GNU gfortran compiler (Version 9.3.0), while it was working correctly with the INTEL ifort compiler (Version 13.1.1).
+**NOTE 2.** The Everhart's RA15 (Radau) integration method *may not* work properly, depending on the compiler used. From the tests we performed, we experienced problems with the GNU gfortran compiler (Version 9.3.0), while it was working correctly with the INTEL ifort compiler (Version 13.1.1).
 
 ## Files preparation
 
-To run simulations that include the Yarkovsky/YORP effect in the model, some additional input files are needed. 
-   1. **yorp_f.txt**, **yorp_g.txt**: these are files containing a discretization of the mean torques shown in Fig. 1 of the reference paper. They are supposed to be placed in a subfolder called *input*. A copy of these files can be found in the *dat* folder of the distribution.
+To run simulations that include the Yarkovsky/YORP effects in the model, some additional input files are needed. 
+   1. **yorp_f.txt**, **yorp_g.txt**: these are files containing a discretization of the mean torques shown in Fig. 1 of the reference paper. They are supposed to be placed in a subdirectory called *input*. A copy of these files can be found in the *dat* directory of the distribution.
    2. **yorp.in**: this is a file containing parameters for the integration of the spin-axis
-     dynamics. This file is also supposed to be contained in a subfolder called *input*. An example of this input file can be found in the *test* folder.
+     dynamics. This file is also supposed to be contained in a subdirectory called *input*. An example of this input file can be found in the *test* directory.
      Here you have to provide:
          - if you want to include the YORP effect in the model
          - if you want to use a stochastic YORP model (see reference paper)
@@ -69,7 +69,7 @@ To run simulations that include the Yarkovsky/YORP effect in the model, some add
 
      
    3. **yarkovsky.in**: this file contains physical and thermal parameters of the asteroids.
-     This file is supposed to be contained in the folder where the mercury integrator is
+     This file is supposed to be contained in the directory where the mercury integrator is
      running. Make sure that all the objects contained in the small.in file are also here.
      Here you have to provide, on each row:
          - the name of the asteroid
@@ -82,21 +82,21 @@ To run simulations that include the Yarkovsky/YORP effect in the model, some add
          - the absorption coefficient &alpha; (usually set to 1)
          - the emissivity &epsilon; (usually set to 1)
 
-**NOTE 1.** When writing real numbers, please make sure they are written with at least a decimal digit, or by using the d0 FORTRAN notation.
+**NOTE 1.** To add the Yarkovsky effect to the model, make sure that the field *include user-defined force* in the original param.in input file for MERCURY is set to *yes*.
 
-**NOTE 2.** To add the Yarkovsky effect to the model, make sure that the field *include user-defined force* in the original param.in input file for MERCURY is set to *yes*.
+**NOTE 2.** When writing real numbers, please make sure they are written with at least a decimal digit, or by using the d0 FORTRAN notation for double precision numbers.
 
 **NOTE 3.** To prepare all the files needed for a standard MERCURY integration, please refer to the original README manual written by John E. Chambers. A copy of this manual can be found in the *doc* directory.
 
 ## How to run a simulation and tests
-We suggest the user to run each simulation in a separate folder. To this purpose, we created a directory called *integrations* where you can add folders for simulations. This directory contains also some test runs that you can use as a guide for the file preparation. To run a simulation, we suggest to follow these steps:
+We suggest the user to run each simulation in a separate directory. To this purpose, we created a directory called *integrations* where you can add directories for simulations. This directory contains also some test runs that you can use as a guide for the files preparation. To run a simulation, we suggest to follow these steps:
 1. Make sure the code is compiled
-2. Move in the *integrations* folder
+2. Move in the *integrations* directory
 3. Create a directory for your own simulation
 
             mkdir myInteg
 
-4. Move in your folder and create links to the binaries
+4. Move in your directory and create links to the binaries
 
             cd myInteg
             ln -s ../../bin/mercury6_yorp
@@ -114,7 +114,7 @@ We suggest the user to run each simulation in a separate folder. To this purpose
 
 6. Create the yarkovsky.in file
 
-7. Create the folder for input
+7. Create the directory for input
 
             mkdir input
             cd input
@@ -133,14 +133,14 @@ We suggest the user to run each simulation in a separate folder. To this purpose
 **Note.** You may want to run the program in background for long-term integrations.
    
 ### Run the test simulation
-The folder *integrations* contains a script that creates a test simulation that includes
-the Yarkovsky and YORP effects in the model. To create the folder, move into the folder
+The directory *integrations* contains a script that creates a test simulation that includes
+the Yarkovsky and YORP effects in the model. To create the directory, move into the directory
 *integrations* and execute
 
       make
 
-A folder called *yorp_test* will be created, together with all the files needed for the
-simulation. To run the simulation, move into the *yorp_test* folder, and run MERCURY with
+A directory called *yorp_test* will be created, together with all the files needed for the
+simulation. To run the simulation, move into the *yorp_test* directory, and run MERCURY with
 
       ./mercury6_yorp
 
@@ -155,10 +155,10 @@ We list here the known problems that need to be fixed in following updates:
 1. A simulation that included the Yarkovsky and/or YORP effects that stopped, **can not**
    be restarted from the dump files. It needs to be restarted from the beginning
 2. In the current version, the yarkovsky.in and yorp.in files need to be placed in
-   specific folders, as explained above. To make the use of the code more flexible, the
+   specific directories, as explained above. To make the use of the code more flexible, the
    name and location of these files should be given in input in the files.in list
 
 ## References
-- M. Fenucci and B. Novaković: 2022. *Mercury and OrbFit packages for numerical integration of planetary systems:
-implementation of the Yarkovsky and YORP effects*, Serbian Astronomical Journal
+- M. Fenucci and B. Novaković: 2022. [*Mercury and OrbFit packages for numerical integration of planetary systems:
+implementation of the Yarkovsky and YORP effects*](https://ui.adsabs.harvard.edu/abs/2022SerAJ.204...51F/abstract), Serbian Astronomical Journal 204, pp. 51-63
 
