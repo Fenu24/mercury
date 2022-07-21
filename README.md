@@ -10,8 +10,8 @@ the spin-axis evolution due to the YORP effect is integrated together with the o
 dynamics. Technical details of the equations and of the implementation can be found in the
 paper
 
-M. Fenucci and B. Novaković: 2022. *Mercury and OrbFit packages for numerical integration of planetary systems:
-implementation of the Yarkovsky and YORP effects*, Serbian Astronomical Journal
+M. Fenucci and B. Novaković: 2022. [*Mercury and OrbFit packages for numerical integration of planetary systems:
+implementation of the Yarkovsky and YORP effects*](https://ui.adsabs.harvard.edu/abs/2022SerAJ.204...51F/abstract), Serbian Astronomical Journal 204, pp. 51-63
 
 If you publish results using this version of the integrator, please refer to the package
 using the above paper. 
