@@ -3,12 +3,12 @@
 
 This software is an augmented version of the MERCURY integrator, that was  originally
 developed by John E. Chambers. The new features included in this package are specifically
-designed for the propagation of small solar system objects, i.e. asteroids.
+designed for the propagation of small Solar System objects, i.e. asteroids.
 
 More specifically, the Yarkovsky effect is added to the gravitational vector field, and
 the spin-axis evolution due to the YORP effect is integrated together with the orbital
 dynamics. Technical details of the equations and of the implementation can be found in the
-paper
+paper:
 
 M. Fenucci and B. Novaković: 2022. [*Mercury and OrbFit packages for numerical integration of planetary systems:
 implementation of the Yarkovsky and YORP effects*](https://ui.adsabs.harvard.edu/abs/2022SerAJ.204...51F/abstract), Serbian Astronomical Journal 204, pp. 51-63
