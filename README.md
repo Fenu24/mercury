@@ -142,7 +142,7 @@ dynamics when the flag *enable_out* is set to 1. The output files are called
 
          <astname>.yorp
 
-and it provides 4 columns representing:
+and it provides 4 columns, representing:
 1. the output time (in years)
 2. the rotation period (in hours)
 3. the obliquity (in degrees)
