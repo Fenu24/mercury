@@ -133,7 +133,7 @@ We suggest the user to run each simulation in a separate directory. To this purp
 **Note.** You may want to run the program in background for long-term integrations.
 
 ### Output files
-The output files for the orbital integration of the asteroids is the same as the one provided by the 
+The output files for the orbital integration of the asteroids are the same as the one provided by the 
 original MERCURY code. Therefore the user can refer to the original README file provided by John E. Chambers 
 for the description of the compressed output files and for their conversion. 
 
