@@ -18,7 +18,7 @@ c
       real*8 HUGE
 c
       parameter (NMAX = 2000)
-      parameter (CMAX = 50)
+      parameter (CMAX = 100)
       parameter (NMESS = 200)
       parameter (HUGE = 9.9d29)
       parameter (NFILES = 50)
