@@ -5067,7 +5067,6 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: John E. Chambers
 c
-c ****** To be completed at a later date ******
 c
 c Calculates post-Newtonian relativistic corrective accelerations for a set
 c of NBOD bodies (NBIG of which are Big).
@@ -5076,6 +5075,9 @@ c This routine should not be called from the symplectic algorithm MAL_MVS
 c or the conservative Bulirsch-Stoer algorithm MAL_BS2.
 c
 c N.B. All coordinates and velocities must be with respect to central body!!!!
+c
+c Reference for this: Nobili et al 1989, Fundamental frequencies and
+c small divisors 
 c ===
 c------------------------------------------------------------------------------
 c
@@ -5087,16 +5089,37 @@ c
 c Input/Output
       integer nbod, nbig
       real*8 m(nbod), x(3,nbod), v(3,nbod), a(3,nbod)
+      real*8 r2, gmtot, clight, m2au, s2d, dx, dy, dz
+
 c
 c Local
       integer j
 c
 c------------------------------------------------------------------------------
 c
-      do j = 1, nbod
-        a(1,j) = 0.d0
-        a(2,j) = 0.d0
-        a(3,j) = 0.d0
+c U = 3GM/c^2 * GM/r^2, M = Total Mass
+c f = -3GM/c^2 * GM x/r^3 
+
+      a = 0.d0
+      ! Convert speed of light from m/s in au/d
+      m2au = 1.d0/149597870700.d0
+      s2d  = 1.d0/86400.d0
+      clight = 299792458.d0*m2au/s2d
+      do j = 2, nbod
+        dx = x(1,j)-x(1,1)
+        dy = x(2,j)-x(2,1)
+        dz = x(3,j)-x(3,1)
+        r2 = dx**2 + dy**2 + dz**2 
+        ! Units of gm are au, d
+        if (j <= nbig) then
+            gmtot = m(1) + m(j)
+        else
+            gmtot = m(1)
+        endif
+
+        a(1,j) = -(3.d0*gmtot/clight**2) * (2.d0*gmtot/r2**2) * dx 
+        a(2,j) = -(3.d0*gmtot/clight**2) * (2.d0*gmtot/r2**2) * dy
+        a(3,j) = -(3.d0*gmtot/clight**2) * (2.d0*gmtot/r2**2) * dz
       end do
 c
 c------------------------------------------------------------------------------
@@ -5921,6 +5944,7 @@ c Read integration parameters
             goto 661
           end if
         end if
+        if (j.eq.14.and.(c1.eq.'y'.or.c1.eq.'Y')) opt(7) = 1
         if (j.eq.15.and.(c1.eq.'y'.or.c1.eq.'Y')) opt(8) = 1
         if (j.eq.16) read (c80,*,err=661) rmax
         if (j.eq.17) read (c80,*,err=661) rcen
