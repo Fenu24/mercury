@@ -169,6 +169,11 @@ by executing
 
       ./element6
 
+## General Relativity effects
+The original mercury integrator by John E. Chambers did not implement general relativity effects. The mercury6 drivers included in this version - mercury6_2 and mercury6_2_yorp - implement general relativity effect in the way described in [Nobili et al 1989](https://ui.adsabs.harvard.edu/abs/1989A%26A...210..313N/abstract), by adding a force with potential 3(GM/cr)^2, where r is the distance from the Sun, c is the speed of light, and M is the mass of the Sun plus the mass of the planet (or just the mass of the Sun for massless particles).
+This term mainly causes a precession of the perihelion, in accordance to what predicted by the general relativity. The force can be included in the dynamical model by setting the line "Include the effects of general relativity (yes or no)" to yes in the param.in input file.
+
+
 ## Known problems
 We list here the known problems that need to be fixed in following updates:
 1. A simulation that included the Yarkovsky and/or YORP effects that stopped, **can not**
