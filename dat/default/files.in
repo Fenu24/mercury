@@ -1,0 +1,10 @@
+input/big.in
+input/small.in
+input/param.in
+output/xv.out
+output/ce.out
+output/info.out
+output/big.dmp
+output/small.dmp
+output/param.dmp
+output/restart.dmp
