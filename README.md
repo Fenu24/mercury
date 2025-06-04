@@ -183,7 +183,7 @@ must be placed in the *integrations* folder through a symbolic link. The script 
 2. Produce Monte Carlo clones of an asteroid starting from an orbit file of the [ESA NEOCC](https://neo.ssa.esa.int/). The script can also automatically download the orbit file through the NEOCC APIs.
 3. Produce Monte Carlo clones of an asteroid from an orbit file of the [ESA NEOCC](https://neo.ssa.esa.int/), and setup an environment for the run of the simulations.
 
-Options 2. and 3. will create files small$i.in, where $i is the number of batches. Each file will contain a number of clones specified by the user. Option 3. creates a folder with the name of the asteroid, and it comes with a script called
+The file big.in is produced by using JPL Horizons APIs, included in the python astroquery package. By default, it will include all the planets from Mercury to Neptune, and the user can optionally choose to include the Moon as well. Options 2. and 3. will create files small$i.in, where $i is the number of batches. Each file will contain a number of clones specified by the user. Option 3. creates a folder with the name of the asteroid, and it comes with a script called
 
       mercury_batch_run.py
 
@@ -192,6 +192,8 @@ This script permits to run the batch simulations with a number of cores specifie
       mercury_batch_run.py -n [ncores]
 
 Each run with input small$i.in is performed in a subfolder called $i, and the results are placed in the folder $i/output.
+
+** NOTE ** To properly run the scripts, the following python modules are needed: astroquery, numpy, scipy, pandas, subprocess, multiprocessing
 
 ## Known problems
 We list here the known problems that need to be fixed in following updates:
