@@ -1,0 +1,1 @@
+../python/mercury_input_generation.py

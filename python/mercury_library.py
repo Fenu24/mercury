@@ -330,7 +330,7 @@ def create_virtual_asteroids_mc(orbfile, nbatch, nclo, pla_flag, moon_flag, set_
             os.symlink('../../python/mercury_batch_run.py', 'mercury_batch_run.py')
             # Change directory to input
             os.chdir('input')
-            os.system('cp ../../dat/param.in .')
+            os.system('cp ../../../dat/default/param.in .')
 
             # If orbit is read from NEOCC, then download it in input folder and read it
             if not ext:
