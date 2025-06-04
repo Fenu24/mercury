@@ -173,6 +173,25 @@ by executing
 The original mercury integrator by John E. Chambers did not implement general relativity effects. The mercury6 drivers included in this version - mercury6_2 and mercury6_2_yorp - implement general relativity effect in the way described in [Nobili et al 1989](https://ui.adsabs.harvard.edu/abs/1989A%26A...210..313N/abstract), by adding a force with potential 3(GM/cr)^2, where r is the distance from the Sun, c is the speed of light, and M is the mass of the Sun plus the mass of the planet (or just the mass of the Sun for massless particles).
 This term mainly causes a precession of the perihelion, in accordance to what predicted by the general relativity. The force can be included in the dynamical model by setting the line "Include the effects of general relativity (yes or no)" to yes in the param.in input file.
 
+## Auxiliary scripts for simulations
+The distribution comes with python scripts to help users to set up simulations. The script
+
+      mercury_input_generation.py
+
+must be placed in the *integrations* folder through a symbolic link. The script permits to:
+1. Produce the file big.in at a time specified by the user.
+2. Produce Monte Carlo clones of an asteroid starting from an orbit file of the [ESA NEOCC](https://neo.ssa.esa.int/). The script can also automatically download the orbit file through the NEOCC APIs.
+3. Produce Monte Carlo clones of an asteroid from an orbit file of the [ESA NEOCC](https://neo.ssa.esa.int/), and setup an environment for the run of the simulations.
+
+Options 2. and 3. will create files small$i.in, where $i is the number of batches. Each file will contain a number of clones specified by the user. Option 3. creates a folder with the name of the asteroid, and it comes with a script called
+
+      mercury_batch_run.py
+
+This script permits to run the batch simulations with a number of cores specified by the user, and it can be launched simply by
+
+      mercury_batch_run.py -n [ncores]
+
+Each run with input small$i.in is performed in a subfolder called $i, and the results are placed in the folder $i/output.
 
 ## Known problems
 We list here the known problems that need to be fixed in following updates:
