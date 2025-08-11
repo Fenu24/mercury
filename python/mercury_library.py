@@ -380,3 +380,93 @@ def create_virtual_asteroids_mc(orbfile, nbatch, nclo, pla_flag, moon_flag, set_
 
     if set_env == 1:
         os.chdir('../..')
+
+
+def create_nominal_orbit(orbfile, pla_flag, moon_flag, set_env=0):
+    # Get asteroid name
+    astname = os.path.splitext(os.path.basename(orbfile))[0]
+    # Check if orbfile has extension or not
+    root, ext = os.path.splitext(orbfile)
+    # Initialize the seed
+    np.random.seed()
+
+    # Set the environment for integration
+    if set_env == 1:
+        run_folder = astname
+        if os.path.isdir(astname):
+            print('ERROR: Folder ' + run_folder + ' already exists. Unable to create run environment.')
+            exit()
+        else:
+            # If orbit is provided in input, read already the orbit file
+            if ext: 
+                el0, coord, A1, A2, t0, cov, nor, H, npar = get_orbit(orbfile)
+
+            os.mkdir(run_folder)
+            os.chdir(run_folder)
+            # Create input folder
+            os.mkdir('input')
+            os.mkdir('output')
+            os.symlink('../../python/mercury_batch_run.py', 'mercury_batch_run.py')
+            # Change directory to input
+            os.chdir('input')
+            os.system('cp ../../../dat/default/param.in .')
+
+            # If orbit is read from NEOCC, then download it in input folder and read it
+            if not ext:
+                print('Downloading eq0 file...')
+                orbit_url = f'https://neo.ssa.esa.int/PSDB-portlet/download?file={orbfile}.eq0'
+                response = requests.get(orbit_url)
+                if response.status_code == 200:
+                    astname = orbfile
+                    orbfile = orbfile + '.eq0'
+                    with open(orbfile, 'w') as f:
+                        f.write(response.text)
+                    print('Done.')
+                    el0, coord, A1, A2, t0, cov, nor, H, npar = get_orbit(orbfile)
+                else:
+                    print(f"Failed to retrieve data: {response.status_code} - {response.text}")
+                    exit()
+
+    # Convert MJD to JD
+    t0_JD = t0 + 2400000.5
+    # Put eventual non-gravs in the same vector of nominal parameters
+    if npar == 6:
+        x0 = el0
+    elif npar == 7:
+        x0 = np.zeros(npar)
+        x0[0:6] = el0[0:6]
+        if A1 != 0.0:
+            x0[6] = A1
+        elif A2 != 0.0:
+            x0[6] = A2
+        else:
+            print('ERROR: A1 and A2 are both zeros, but dim = ' + str(npar), err=True)
+            exit()
+    elif npar == 8:
+        x0 = np.zeros(npar)
+        x0[0:6] = el0[0:6]
+        x0[6] = A1
+        x0[7] = A2
+    else:
+        print('ERROR: dim = ' + str(npar), err=True)
+        exit()
+
+    # Create the small file
+    filename = 'small.in'
+    x = equ2kep(x0[0:6])
+    with open(filename, 'w') as f:
+        # Write header
+        f.write(')O+_06 Small-body initial data  (WARNING: Do not delete this line!!)\n')
+        f.write(') Lines beginning with ) are ignored.\n')
+        f.write(')-----------------------------------------------------\n')
+        f.write(' style (Cartesian, Asteroidal, Cometary) = Asteroidal\n')
+        f.write(')---------d or D is not matter--0d0 is possible too--\n')
+        f.write(astname + '   ep = ' + str(t0_JD) + '\n')
+        line = str(x[0]) + " " + str(x[1]) + " " + str(x[2]) + " " + str(x[4]) + " " + str(x[3]) + " " + str(x[5]) + " 0.d0 0.d0 0.d0\n"
+        f.write(line)
+
+    if pla_flag == 1:
+        create_big_mercury(t0_JD, moon_flag)
+
+    if set_env == 1:
+        os.chdir('../..')
