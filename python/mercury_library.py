@@ -275,11 +275,9 @@ def gen_clone(x0, cov0, coord):
     # Pick a sample of the asteroid orbit
     x = np.random.multivariate_normal(x0, cov0)
     if coord == 'EQU':
-       kep_el = equ2kep(x[0:6])
-       kep_el.append(x[6:])
+        kep_el = equ2kep(x[0:6])
     else:
         kep_el = x[0:6]
-        kep_el.append(x[6:])
     return kep_el
 
 # x0 is the full nominal orbit, with non-gravs
