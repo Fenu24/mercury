@@ -3,11 +3,11 @@
 )---------------------------------------------------------------------
 ) Important integration parameters:
 )---------------------------------------------------------------------
- algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = hyb
- start time (days)=   0.0
- stop time (days) =   365.25d6
- output interval (days) = 3652.25
- timestep (days) = 4.1d0
+ algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = bs
+ start time (days)=   2460705.450998578
+ stop time (days) =   2464358.951
+ output interval (days) = 30.0
+ timestep (days) = 0.1d0
  accuracy parameter=1.d-12
 )---------------------------------------------------------------------
 ) Integration options:
@@ -20,7 +20,7 @@
  output precision = high
  < not used at present >
  include relativity in integration=no
- include user-defined force = yes
+ include user-defined force = no
 )---------------------------------------------------------------------
 ) These parameters do not need to be adjusted often:
 )---------------------------------------------------------------------

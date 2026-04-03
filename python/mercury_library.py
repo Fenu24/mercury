@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.12
 from astroquery.jplhorizons import Horizons
 from astroquery.jplhorizons.core import conf
 import pandas as pd
@@ -330,16 +330,16 @@ def create_virtual_asteroids_mc(orbfile, nbatch, nclo, pla_flag, moon_flag, set_
             os.symlink('../../python/mercury_batch_run.py', 'mercury_batch_run.py')
             # Change directory to input
             os.chdir('input')
-            os.system('cp ../../dat/param.in .')
+            os.system('cp ../../../dat/default/param.in .')
 
             # If orbit is read from NEOCC, then download it in input folder and read it
             if not ext:
-                print('Downloading eq0 file...')
-                orbit_url = f'https://neo.ssa.esa.int/PSDB-portlet/download?file={orbfile}.eq0'
+                print('Downloading eq1 file...')
+                orbit_url = f'https://neo.ssa.esa.int/PSDB-portlet/download?file={orbfile}.eq1'
                 response = requests.get(orbit_url)
                 if response.status_code == 200:
                     astname = orbfile
-                    orbfile = orbfile + '.eq0'
+                    orbfile = orbfile + '.eq1'
                     with open(orbfile, 'w') as f:
                         f.write(response.text)
                     print('Done.')
