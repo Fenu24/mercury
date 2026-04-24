@@ -75,6 +75,7 @@ if __name__ == "__main__":
     # Run mercury6 in parallel
     # List of first inputs
     runlist = range(1, nbatch + 1)
+    print(runlist)
     # Create a pool of worker processes
     with multiprocessing.Pool(processes=ncores) as pool:
         # Map the partial function over the list of first inputs in parallel
