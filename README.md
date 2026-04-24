@@ -219,7 +219,7 @@ contains settings for dust simulations:
    - The radiation pressure coefficient;
    - The solar wind coefficient.
 
-An example dust.in file look like this:
+An example dust.in file looks like this:
 
       &params
       rp_rho = 2500.d0,
