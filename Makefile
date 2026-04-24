@@ -4,7 +4,7 @@ include make.flags
 BIN=bin
 EXEC=exec
 SRC=src
-FDEPENDS = $(SRC)/mercury.inc $(SRC)/swift.inc .obj/yorp_module.o
+FDEPENDS = $(SRC)/mercury.inc $(SRC)/swift.inc .obj/yorp_module.o .obj/dust_module.o
 
 # --- Help
 #help:
@@ -17,9 +17,9 @@ FDEPENDS = $(SRC)/mercury.inc $(SRC)/swift.inc .obj/yorp_module.o
 #	@echo
 
 # --- Build Fortran programs
-all:	$(BIN)/close6 $(BIN)/element6 $(BIN)/mercury6 $(BIN)/mercury6_yorp 
+all:	$(BIN)/close6 $(BIN)/element6 $(BIN)/mercury6 $(BIN)/mercury6_yorp  $(BIN)/mercury6_dust
 
-build:	$(BIN)/close6 $(BIN)/element6 $(BIN)/mercury6 $(BIN)/mercury6_yorp maketest
+build:	$(BIN)/close6 $(BIN)/element6 $(BIN)/mercury6 $(BIN)/mercury6_yorp $(BIN)/mercury6_dust maketest
 
 $(BIN)/close6:	$(FDEPENDS) $(SRC)/close6.for
 	$(FORTRAN) $(FFLAGS) -o $(BIN)/close6 $(SRC)/close6.for
@@ -33,7 +33,13 @@ $(BIN)/mercury6:	$(FDEPENDS) $(SRC)/mercury6_2.for
 $(BIN)/mercury6_yorp:	$(FDEPENDS) $(SRC)/mercury6_2_yorp.for 
 	$(FORTRAN) $(FFLAGS) -o $(BIN)/mercury6_yorp $(SRC)/mercury6_2_yorp.for .obj/yorp_module.o
 
+$(BIN)/mercury6_dust:	$(FDEPENDS) $(SRC)/mercury6_2_dust.for 
+	$(FORTRAN) $(FFLAGS) -o $(BIN)/mercury6_dust $(SRC)/mercury6_2_dust.for .obj/dust_module.o
+
 .obj/yorp_module.o: src/yorp_module.f90 
+	$(FORTRAN) $(FFLAGS) -c $< -o $@
+
+.obj/dust_module.o: src/dust_module.f90 
 	$(FORTRAN) $(FFLAGS) -c $< -o $@
 
 maketest:
@@ -41,10 +47,10 @@ maketest:
 
 # --- Remove executable files
 clean:
-	rm -f $(BIN)/element6 $(BIN)/close6 $(BIN)/mercury6 $(BIN)/mercury6_yorp
+	rm -f $(BIN)/element6 $(BIN)/close6 $(BIN)/mercury6 $(BIN)/mercury6_yorp $(BIN)/mercury6_dust
 	rm -f .mod/* .obj/*
 
 distclean:
-	rm -f $(BIN)/element6 $(BIN)/close6 $(BIN)/mercury6 $(BIN)/mercury6_yorp
+	rm -f $(BIN)/element6 $(BIN)/close6 $(BIN)/mercury6 $(BIN)/mercury6_yorp $(BIN)/mercury6_dust
 	rm -f .mod/* .obj/*
 	cd integrations && make clean

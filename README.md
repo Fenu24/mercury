@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/248948387.svg)](https://zenodo.org/badge/latestdoi/248948387)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.248948387.svg)](https://zenodo.org/badge/latestdoi/248948387)
 
 # Manual for the augmented MERCURY integrator
 
