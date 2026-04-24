@@ -258,16 +258,15 @@ c------------------------------------------------------------------------------
             rp_s   = 0.001d0
             rp_QPR = 1.d0
             rp_csi = 0.3d0
+         else
+            ! Read the namelist
+            read(iun, nml=params, iostat=iostat)
+            if (iostat /= 0) then
+               write(*,*) 'ERROR: failed to read namelist. Stopping.'
+               stop 1
+            end if
+            close(iun)
          end if
-
-         ! Read the namelist
-         read(iun, nml=params, iostat=iostat)
-         if (iostat /= 0) then
-            write(*,*) 'ERROR: failed to read namelist. Stopping.'
-            stop 1
-         end if
-
-         close(iun)
 
          ! Compute beta
          rp_beta = 5.7d-4 * rp_QPR/(rp_rho*rp_s)
