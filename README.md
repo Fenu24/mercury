@@ -170,7 +170,7 @@ by executing
       ./element6
 
 ## General Relativity effects
-The original mercury integrator by John E. Chambers did not implement general relativity effects. The mercury6 drivers included in this version - mercury6_2 and mercury6_2_yorp - implement general relativity effect in the way described in [Nobili et al 1989](https://ui.adsabs.harvard.edu/abs/1989A%26A...210..313N/abstract), by adding a force with potential 3(GM/cr)^2, where r is the distance from the Sun, c is the speed of light, and M is the mass of the Sun plus the mass of the planet (or just the mass of the Sun for massless particles).
+The original mercury integrator by John E. Chambers did not implement general relativity effects. The mercury6 drivers included in this version - mercury6_2 and mercury6_2_yorp - implement general relativity effect in the way described in [Nobili et al. 1989](https://ui.adsabs.harvard.edu/abs/1989A%26A...210..313N/abstract), by adding a force with potential 3(GM/cr)^2, where r is the distance from the Sun, c is the speed of light, and M is the mass of the Sun plus the mass of the planet (or just the mass of the Sun for massless particles).
 This term mainly causes a precession of the perihelion, in accordance to what predicted by the general relativity. The force can be included in the dynamical model by setting the line "Include the effects of general relativity (yes or no)" to yes in the param.in input file.
 
 ## Auxiliary scripts for simulations
@@ -193,7 +193,7 @@ This script permits to run the batch simulations with a number of cores specifie
 
 Each run with input small$i.in is performed in a subfolder called $i, and the results are placed in the folder $i/output.
 
-** NOTE ** To properly run the scripts, the following python modules are needed: astroquery, numpy, scipy, pandas, subprocess, multiprocessing
+**NOTE** To properly run the scripts, the following python modules are needed: astroquery, numpy, scipy, pandas, subprocess, multiprocessing
 
 ## Known problems
 We list here the known problems that need to be fixed in following updates:
@@ -202,6 +202,35 @@ We list here the known problems that need to be fixed in following updates:
 2. In the current version, the yarkovsky.in and yorp.in files need to be placed in
    specific directories, as explained above. To make the use of the code more flexible, the
    name and location of these files should be given in input in the files.in list
+
+
+# Mercury dust: simulating the evolution of meteor streams
+
+Another modified version of mercury has been added to this repository, called mercury6_dust. This driver is intended for simulating the dynamical evolution of small particles in the Solar System, and it is thus suitable
+to study the dynamics of meteor streams. By activating the user-defined force, the dynamical model takes into account:
+1. The radiation pressure and the Poynting-Robertson drag, as described in [Burns et al. 1979](https://ui.adsabs.harvard.edu/abs/1979Icar...40....1B/abstract);
+2. Solar wind drag;
+3. Post-Newtonian relativistic correction.
+
+The model used is the same as described in [Jo and Ishiguro 2024](https://ui.adsabs.harvard.edu/abs/2024A%26A...683A..68J/abstract). This new drier needs an input file called **dust.in**, to be placed in the same directory where the simulation runs. This file
+contains settings for dust simulations:
+   - The density of the particles to simulate, in kg/m^3;
+   - The radius of the particles, in m;
+   - The radiation pressure coefficient;
+   - The solar wind coefficient.
+
+An example dust.in file look like this:
+
+      &params
+      rp_rho = 2500.d0,
+      rp_s   = 0.0001d0,
+      rp_QPR = 1.d0,
+      rp_csi = 0.3d0
+      /
+
+If the dust.in is not found in input, default settings are used. In this case, the density is 2000 kg/m^,the radius is 1 mm, the radiation pressure coefficient is 1,
+and the solar wind coefficient is 0.3.
+
 
 ## References
 - M. Fenucci and B. Novaković: 2022. [*Mercury and OrbFit packages for numerical integration of planetary systems:

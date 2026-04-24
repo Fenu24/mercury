@@ -252,8 +252,12 @@ c------------------------------------------------------------------------------
          ! Open the file
          open(newunit=iun, file='dust.in', status='old', iostat=iostat)
          if (iostat /= 0) then
-            write(*,*) 'ERROR: dust.nml not found. Stopping.'
-            stop 
+            write(*,*) 'WARNING: dust.in not found.'
+            write(*,*) 'WARNING: Using default dust settings.'
+            rp_rho = 2000.d0
+            rp_s   = 0.001d0
+            rp_QPR = 1.d0
+            rp_csi = 0.3d0
          end if
 
          ! Read the namelist
