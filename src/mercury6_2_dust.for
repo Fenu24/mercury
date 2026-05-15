@@ -350,9 +350,9 @@ c
       do j = 2, nbod
         dx = x(1,j)
         dy = x(2,j)
-        dz = x(1,j)
-        v1 = v(2,j)
-        v2 = v(3,j)
+        dz = x(3,j)
+        v1 = v(1,j)
+        v2 = v(2,j)
         v3 = v(3,j)
         ! Compute distance and distance squared
         r2 = dx**2 + dy**2 + dz**2 
@@ -374,6 +374,7 @@ c
         a(1,j)=a(1,j) - 3.d0*gmtot*norm_rxv**2/(clight_c**2*r2**2)*dx/r 
         a(2,j)=a(2,j) - 3.d0*gmtot*norm_rxv**2/(clight_c**2*r2**2)*dy/r 
         a(3,j)=a(3,j) - 3.d0*gmtot*norm_rxv**2/(clight_c**2*r2**2)*dz/r 
+
       end do
 
 c
