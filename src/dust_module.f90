@@ -22,6 +22,8 @@ module dust_module
    real(kind=dkind), parameter :: m2au = 1.d0/AU
    ! Speed of light [m s^-1]
    real(kind=dkind), parameter :: clight = 299792458.d0
+   ! Solar constant [W/m^2] 
+   real(kind=dkind), parameter :: S_const = 1361.d0
    ! Conversions
    real(kind=dkind), parameter :: h2s = 3600.d0
    real(kind=dkind), parameter :: s2h = 1.d0/h2s
@@ -45,10 +47,11 @@ module dust_module
    real(kind=dkind) :: rp_s
    real(kind=dkind) :: rp_QPR
    real(kind=dkind) :: rp_beta
+   logical          :: srp_flag
 
    public :: h2s, s2h, d2s, s2d, y2d, d2y, y2s, s2y, yr2my, s2my, my2s, h2d, d2h, deg2rad, rad2deg, m2au
    public :: clight
-   public :: rp_csi, rp_rho, rp_s, rp_QPR, rp_beta
+   public :: rp_csi, rp_rho, rp_s, rp_QPR, rp_beta, srp_flag, S_const
 
 end module dust_module
 

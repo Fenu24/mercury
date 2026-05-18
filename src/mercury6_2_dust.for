@@ -246,7 +246,7 @@ c------------------------------------------------------------------------------
          implicit none
          include'mercury.inc'
          ! Define the namelist group
-         namelist /params/ rp_rho, rp_s, rp_QPR, rp_csi
+         namelist /params/ rp_rho, rp_s, rp_QPR, rp_csi, srp_flag
          integer :: iun, iostat
 
          ! Open the file
@@ -254,10 +254,11 @@ c------------------------------------------------------------------------------
          if (iostat /= 0) then
             write(*,*) 'WARNING: dust.in not found.'
             write(*,*) 'WARNING: Using default dust settings.'
-            rp_rho = 2000.d0
-            rp_s   = 0.001d0
-            rp_QPR = 1.d0
-            rp_csi = 0.3d0
+            rp_rho   = 2000.d0
+            rp_s     = 0.001d0
+            rp_QPR   = 1.d0
+            rp_csi   = 0.3d0
+            srp_flag = .false.
          else
             ! Read the namelist
             read(iun, nml=params, iostat=iostat)
@@ -310,7 +311,7 @@ c Input/Output
       integer nbod, nbig
       real*8 time,jcen(3),m(nbod),x(3,nbod),v(3,nbod),a(3,nbod)
 c Local
-      real*8 r, r2
+      real*8 r, r2, A1, R_c, rho_c
       real*8 gmtot, clight_c, dx, dy, dz, rxv(3), norm_rxv
       real*8 v1, v2, v3, Fg, vdotr, fac1, fac2
 c
@@ -322,7 +323,6 @@ c
       ! not add any drift to the planets
       a = 0.d0
       ! Convert speed of light from m/s in au/d
-
       clight_c = clight*m2au/s2d
 
       ! Add the solar radiation term 
@@ -340,10 +340,21 @@ c
         ! Compute first and second factor
         fac1 = 1.d0 - 2.d0*(1.d0 + rp_csi)*vdotr/(clight_c*r)
         fac2 = 1.d0 + rp_csi
-        ! Compute PN force
+        ! Compute drag force
         a(1,j) = Fg*rp_beta*(fac1*dx/r - fac2*v1/clight_c)
         a(2,j) = Fg*rp_beta*(fac1*dy/r - fac2*v2/clight_c)
         a(3,j) = Fg*rp_beta*(fac1*dz/r - fac2*v3/clight_c)
+
+        ! Add solar radiation pressure
+        if (srp_flag) then
+            ! Convert radius and density in au
+            R_c   = rp_s * m2au
+            rho_c = rp_rho/(m2au)**3
+            A1 = (S_const/s2d**3)*3.d0/(4.d0*clight_c*R_c*rho_c)
+            a(1,j) = a(1,j) + A1*dx/r**3
+            a(2,j) = a(2,j) + A1*dy/r**3
+            a(3,j) = a(3,j) + A1*dz/r**3
+        endif
       end do
 
       ! Add the PostNewtonian Relativistic contribution
@@ -374,6 +385,7 @@ c
         a(1,j)=a(1,j) - 3.d0*gmtot*norm_rxv**2/(clight_c**2*r2**2)*dx/r 
         a(2,j)=a(2,j) - 3.d0*gmtot*norm_rxv**2/(clight_c**2*r2**2)*dy/r 
         a(3,j)=a(3,j) - 3.d0*gmtot*norm_rxv**2/(clight_c**2*r2**2)*dz/r 
+
 
       end do
 
